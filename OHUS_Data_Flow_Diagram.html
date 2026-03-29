@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OHUS Billing Data Flow Diagram</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f7f6f3; color: #37352f; }
+
+  .page { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
+  .meta { font-size: 13px; color: #9b9a97; margin-bottom: 36px; }
+
+  /* Tab nav */
+  .tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 1.5px solid #e0ddd8; }
+  .tab { padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; color: #9b9a97; transition: all .15s; }
+  .tab.active { color: #37352f; border-bottom-color: #37352f; }
+  .tab:hover { color: #37352f; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* ── OVERVIEW DIAGRAM ── */
+  .flow-wrap { display: flex; flex-direction: column; gap: 0; }
+  .flow-step { display: grid; grid-template-columns: 120px 1fr; gap: 16px; align-items: start; }
+  .flow-arrow { display: flex; justify-content: center; padding: 6px 0 6px 60px; color: #c1bdb5; font-size: 18px; }
+  .step-label { padding-top: 14px; }
+  .step-num { font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9b9a97; margin-bottom: 2px; }
+  .step-who { font-size: 12px; font-weight: 600; color: #37352f; }
+  .step-sub { font-size: 11px; color: #9b9a97; }
+  .step-card { border-radius: 8px; border: 1px solid; padding: 14px 16px; }
+  .step-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+  .step-desc { font-size: 12px; line-height: 1.6; }
+  .step-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .tag { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+
+  /* color themes */
+  .c-gray { background: #f1f0ed; border-color: #d9d6cf; }
+  .c-gray .step-title { color: #37352f; }
+  .c-teal { background: #e8f5f0; border-color: #9fd4c0; }
+  .c-teal .step-title { color: #0d6e52; }
+  .c-blue { background: #e8f0fb; border-color: #95b8e8; }
+  .c-blue .step-title { color: #1a4f8a; }
+  .c-purple { background: #f0eefb; border-color: #b8b0e8; }
+  .c-purple .step-title { color: #3d3589; }
+  .c-orange { background: #fdf3e7; border-color: #f5c080; }
+  .c-orange .step-title { color: #8a4f10; }
+  .c-amber { background: #fef9e7; border-color: #f5d870; }
+  .c-amber .step-title { color: #7a6010; }
+  .c-green { background: #edf7e6; border-color: #a8d68a; }
+  .c-green .step-title { color: #2d6614; }
+
+  .tag-add { background: #d4edda; color: #1a5e2e; }
+  .tag-rem { background: #fde8e8; color: #8a1a1a; }
+  .tag-key { background: #e8f0fb; color: #1a4f8a; }
+
+  /* Branch section */
+  .branch-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 8px; }
+  .branch-card { border-radius: 8px; border: 1px solid; padding: 12px 14px; }
+  .branch-title { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+  .branch-desc { font-size: 11px; line-height: 1.6; color: #555; }
+
+  /* ── FIELD TRANSFORMATION TABLE ── */
+  .transform-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .transform-table th { background: #f1f0ed; text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #9b9a97; border-bottom: 1px solid #e0ddd8; }
+  .transform-table td { padding: 10px 14px; border-bottom: 1px solid #f1f0ed; vertical-align: top; line-height: 1.6; }
+  .transform-table tr:hover td { background: #faf9f7; }
+  .stage-name { font-weight: 600; color: #37352f; white-space: nowrap; }
+  .add-list { color: #1a5e2e; }
+  .rem-list { color: #8a1a1a; }
+  .field-chip { display: inline-block; background: #f1f0ed; border-radius: 3px; padding: 1px 6px; margin: 2px 2px 2px 0; font-size: 11px; font-family: monospace; color: #555; }
+  .field-chip.add { background: #d4edda; color: #1a5e2e; }
+  .field-chip.rem { background: #fde8e8; color: #8a1a1a; text-decoration: line-through; opacity: .8; }
+
+  /* ── FILE MAP ── */
+  .file-section { margin-bottom: 24px; }
+  .file-section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #9b9a97; margin-bottom: 10px; padding-bottom: 4px; border-bottom: 1px solid #e0ddd8; }
+  .file-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .file-owner { font-size: 11px; font-weight: 600; color: white; border-radius: 5px; padding: 4px 10px; white-space: nowrap; min-width: 80px; text-align: center; margin-top: 2px; }
+  .file-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .file-chip { font-size: 11px; padding: 4px 10px; border-radius: 5px; border: 1px solid; font-family: monospace; line-height: 1.4; }
+  .fc-src { background: #e8f0fb; border-color: #95b8e8; color: #1a4f8a; }
+  .fc-mid { background: #fdf3e7; border-color: #f5c080; color: #8a4f10; }
+  .fc-out { background: #d4edda; border-color: #7ec89a; color: #1a5e2e; }
+  .fc-log { background: #fde8e8; border-color: #e8a0a0; color: #8a1a1a; }
+  .fc-ref { background: #f1f0ed; border-color: #c8c4bc; color: #6b6860; }
+  .ow-billing { background: #1a4f8a; }
+  .ow-qa { background: #3d3589; }
+  .ow-cs { background: #0d6e52; }
+  .ow-maria { background: #8a4f10; }
+  .ow-ref { background: #6b6860; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #6b6860; }
+  .leg-dot { width: 12px; height: 12px; border-radius: 3px; border: 1px solid; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>OHUS Billing Data Flow</h1>
+  <div class="meta">Current State (As-Is) · March 29, 2026 · A to B Project</div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="show('overview',this)">① Overview Flow</div>
+    <div class="tab" onclick="show('fields',this)">② Field Transformation</div>
+    <div class="tab" onclick="show('files',this)">③ File Map</div>
+  </div>
+
+  <!-- ══════════════════════ PANEL 1: OVERVIEW ══════════════════════ -->
+  <div class="panel active" id="panel-overview">
+  <div class="flow-wrap">
+
+    <!-- STEP 0 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 0</div>
+        <div class="step-who">Draw Station</div>
+        <div class="step-sub">Phlebotomist</div>
+      </div>
+      <div class="step-card c-gray">
+        <div class="step-title">Specimen Receipt & Paper Requisition</div>
+        <div class="step-desc">Specimen arrives with paper requisition form containing patient info, insurance, ICD codes, NPI, and ordered tests. Known issue: SNF accounts (Sunmar) frequently arrive with incomplete insurance data.</div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 1 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 1</div>
+        <div class="step-who">May</div>
+        <div class="step-sub">Lab / Accession</div>
+      </div>
+      <div class="step-card c-teal">
+        <div class="step-title">Accession / Intake → LABDAQ Data Entry</div>
+        <div class="step-desc">Patient lookup or creation, client/location entry, insurance & ICD verification, test-specimen matching. Problem specimens held up to 7 days in walk-in cooler. Requisitions passed to CS after lab QA/QC.</div>
+        <div class="step-tags">
+          <span class="tag tag-key">Patient</span>
+          <span class="tag tag-key">Insurance</span>
+          <span class="tag tag-key">ICD codes</span>
+          <span class="tag tag-key">NPI</span>
+          <span class="tag tag-key">Tests</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 2 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 2</div>
+        <div class="step-who">Billing Team</div>
+        <div class="step-sub">DataMiner</div>
+      </div>
+      <div class="step-card c-blue">
+        <div class="step-title">LABDAQ Export → Master DM (43 fields)</div>
+        <div class="step-desc">Daily export from DataMiner. This is the raw source data for all downstream processing. Duplicates separated to DUPES REMOVED sheet. SSN left blank for security.</div>
+        <div class="step-tags">
+          <span class="tag tag-key">REQ_ACCESSION</span>
+          <span class="tag tag-key">INSURANCE_NAME</span>
+          <span class="tag tag-key">CPT_CODES</span>
+          <span class="tag tag-key">DIAGNOSIS_1–12</span>
+          <span class="tag tag-key">PANEL_NAME</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 3 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 3</div>
+        <div class="step-who">Vanessa</div>
+        <div class="step-sub">CS Team</div>
+      </div>
+      <div class="step-card c-purple">
+        <div class="step-title">Requisition Sorting (~2–3 hrs/day)</div>
+        <div class="step-desc">Manual sort of paper requisitions by payment type: Cash &amp; Card / Bill Client / Toxicology / Insurance / SNF. Labels applied. Problem cases logged. LIS corrections made if new info is obtained.</div>
+        <div class="step-tags">
+          <span class="tag tag-add">Problem DM log</span>
+          <span class="tag tag-rem">~2–3 hrs daily bottleneck</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 4 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 4</div>
+        <div class="step-who">Annabel</div>
+        <div class="step-sub">Billing Team</div>
+      </div>
+      <div class="step-card c-orange">
+        <div class="step-title">Reconciliation — Core Data Transformation</div>
+        <div class="step-desc">Master DM → Reconciliation sheet. Fields enriched via VLOOKUP from external reference files (Rep List, TEST LIST). Non-billable and special cases separated into sub-sheets. Culture CPT codes entered manually — most time-intensive step.</div>
+        <div class="step-tags">
+          <span class="tag tag-add">+ PECOS</span>
+          <span class="tag tag-add">+ REP</span>
+          <span class="tag tag-add">+ BILLING TYPE</span>
+          <span class="tag tag-add">+ TEST TYPES</span>
+          <span class="tag tag-add">+ CULTURES NEW CODES</span>
+          <span class="tag tag-add">+ DIAGNOSIS_13–20</span>
+          <span class="tag tag-rem">− QA-only rows</span>
+          <span class="tag tag-rem">− PANEL_CODE</span>
+          <span class="tag tag-rem">STAT / Cultures / Send-out → sub-sheets</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 5 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 5</div>
+        <div class="step-who">Ashley</div>
+        <div class="step-sub">+ Annabel</div>
+      </div>
+      <div class="step-card c-amber">
+        <div class="step-title">QA Review — Verification & Escalation</div>
+        <div class="step-desc">Secondary review: address, NPI/PECOS, insurance, secondary insurance, diagnosis codes, STAT &amp; Culture flags. Problems escalated to Missing REQ log or NoINS log. Scan log maintained to confirm all requisitions accounted for.</div>
+        <div class="step-tags">
+          <span class="tag tag-add">+ STAT TEST flag</span>
+          <span class="tag tag-add">+ CULTURES flag &amp; CPT</span>
+          <span class="tag tag-add">+ STATUS / NOTES</span>
+          <span class="tag tag-rem">− CPT_CODES</span>
+          <span class="tag tag-rem">− PANEL_STAT</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 6 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 6</div>
+        <div class="step-who">Annabel</div>
+        <div class="step-sub">Ashley</div>
+      </div>
+      <div class="step-card c-green">
+        <div class="step-title">Final Manifest — Biller-Ready Output</div>
+        <div class="step-desc">All internal fields stripped. Only externally required fields remain. Attached with Scanned Requisition (PDF) and LABDAQ Billing Report (PDF) for Insurance; QuickBooks Invoice (PDF) for Bill Client.</div>
+        <div class="step-tags">
+          <span class="tag tag-rem">− All internal codes &amp; flags</span>
+          <span class="tag tag-rem">− SSN, DOCTOR_CODE, REQ_INITIALS</span>
+          <span class="tag tag-rem">− BILLING TYPE, PECOS, QA notes</span>
+          <span class="tag tag-add">+ Scanned Req (PDF)</span>
+          <span class="tag tag-add">+ Billing Report (PDF)</span>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 7 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 7</div>
+        <div class="step-who">Split by</div>
+        <div class="step-sub">Billing Type</div>
+      </div>
+      <div class="step-card c-gray">
+        <div class="step-title">Billing Type Split & Transmission</div>
+        <div class="branch-row" style="margin-top:12px;">
+          <div class="branch-card c-blue">
+            <div class="branch-title">Insurance</div>
+            <div class="branch-desc">Manifest + Req Scan + Billing Report → Synaps (current) / PRG (transitioning). Portal access currently held by Synaps.</div>
+          </div>
+          <div class="branch-card c-teal">
+            <div class="branch-title">Bill Client</div>
+            <div class="branch-desc">Manifest + QuickBooks Invoice → direct facility billing. Monthly. Pricing varies by client (Medicare / % Medicare / custom).</div>
+          </div>
+          <div class="branch-card c-purple">
+            <div class="branch-title">Cash / Card</div>
+            <div class="branch-desc">Cash Log only (Maria). No biller submission. EFT downloaded daily from bank.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flow-arrow">↓</div>
+
+    <!-- STEP 8 -->
+    <div class="flow-step">
+      <div class="step-label">
+        <div class="step-num">Step 8</div>
+        <div class="step-who">Maria</div>
+        <div class="step-sub">+ Mina</div>
+      </div>
+      <div class="step-card c-gray">
+        <div class="step-title">AR Tracking & Payment Posting</div>
+        <div class="step-desc">Insurance EFT/checks forwarded to billers for EOB breakdown. Bill Client payments posted in QuickBooks. AR Aging reports maintained. Historical logs kept for dispute resolution.</div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- ══════════════════════ PANEL 2: FIELD TRANSFORMATION ══════════════════════ -->
+  <div class="panel" id="panel-fields">
+
+    <table class="transform-table">
+      <thead>
+        <tr>
+          <th style="width:18%">Stage</th>
+          <th style="width:41%">Fields ADDED <span style="color:#1a5e2e">▲</span></th>
+          <th style="width:41%">Fields REMOVED / SEPARATED <span style="color:#8a1a1a">▼</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="stage-name">LABDAQ<br>→ Master DM</span><br><span style="font-size:11px;color:#9b9a97;">Billing Team</span></td>
+          <td class="add-list">
+            Raw export — no fields added.<br>
+            <span style="font-size:11px;color:#9b9a97;">43 columns as-is from DataMiner.</span>
+          </td>
+          <td class="rem-list">
+            <span class="field-chip rem">SSN</span> blanked for security<br>
+            <span class="field-chip rem">Duplicate rows</span> → DUPES REMOVED sheet
+          </td>
+        </tr>
+        <tr>
+          <td><span class="stage-name">Master DM<br>→ Reconciliation</span><br><span style="font-size:11px;color:#9b9a97;">Annabel</span></td>
+          <td class="add-list">
+            <span class="field-chip add">PECOS</span> VLOOKUP(NPI)<br>
+            <span class="field-chip add">REP</span> VLOOKUP(Location)<br>
+            <span class="field-chip add">BILLING TYPE</span> VLOOKUP(Location)<br>
+            <span class="field-chip add">TEST TYPES</span> VLOOKUP(Panel → TEST LIST)<br>
+            <span class="field-chip add">SEND OUT ONLY</span> formula flag<br>
+            <span class="field-chip add">MATCH</span> VLOOKUP(→ QA sheet)<br>
+            <span class="field-chip add">FINAL BILLING TYPE</span> VLOOKUP(→ QA)<br>
+            <span class="field-chip add">TOX</span> VLOOKUP(→ QA)<br>
+            <span class="field-chip add">CULTURES NEW CODES</span> manual entry<br>
+            <span class="field-chip add">DIAGNOSIS_13–20</span> extended manually
+          </td>
+          <td class="rem-list">
+            <span class="field-chip rem">PANEL_CODE</span> internal only<br>
+            <span class="field-chip rem">ORGANIZATION_CODE</span> internal only<br>
+            <span class="field-chip rem">QA DONE rows</span> deleted<br>
+            STAT cases → <em>Stat test</em> sheet<br>
+            Culture cases → <em>Cultures</em> sheet<br>
+            Send-out cases → <em>Send out only</em> sheet
+          </td>
+        </tr>
+        <tr>
+          <td><span class="stage-name">Reconciliation<br>→ QA</span><br><span style="font-size:11px;color:#9b9a97;">Ashley + Annabel</span></td>
+          <td class="add-list">
+            <span class="field-chip add">STAT TEST</span> flag<br>
+            <span class="field-chip add">CULTURES</span> flag<br>
+            <span class="field-chip add">CULTURES CPT CODES</span> confirmed<br>
+            <span class="field-chip add">STATUS</span> QA result<br>
+            <span class="field-chip add">FINAL BILLING TYPE</span> confirmed<br>
+            <span class="field-chip add">NOTES</span> free text<br>
+            <span class="field-chip add">Entered By</span> staff name
+          </td>
+          <td class="rem-list">
+            <span class="field-chip rem">CPT_CODES</span> not needed at QA<br>
+            <span class="field-chip rem">PANEL_LAB_NAME</span> not needed<br>
+            <span class="field-chip rem">ORGANIZATION info</span> internal<br>
+            <span class="field-chip rem">PANEL_STAT</span> replaced by STAT TEST flag<br>
+            Problem cases → Missing REQ log<br>
+            No-insurance → NoINS log
+          </td>
+        </tr>
+        <tr>
+          <td><span class="stage-name">QA<br>→ Final Manifest</span><br><span style="font-size:11px;color:#9b9a97;">Annabel / Ashley</span></td>
+          <td class="add-list">
+            No new fields added.<br>
+            <span style="font-size:11px;color:#9b9a97;">Documents attached:</span><br>
+            <span class="field-chip add">Scanned Requisition (PDF)</span><br>
+            <span class="field-chip add">Billing Report (PDF)</span><br>
+            <span class="field-chip add">QB Invoice (PDF — Bill Client only)</span>
+          </td>
+          <td class="rem-list">
+            <span class="field-chip rem">PATIENT_CODE</span>
+            <span class="field-chip rem">SSN</span>
+            <span class="field-chip rem">DOCTOR_CODE</span><br>
+            <span class="field-chip rem">REQ_INITIALS</span>
+            <span class="field-chip rem">COLLECT_INITIALS</span><br>
+            <span class="field-chip rem">REQ_RECEIVED_DATE</span>
+            <span class="field-chip rem">LOCATION_CODE</span><br>
+            <span class="field-chip rem">PANEL_CODE</span>
+            <span class="field-chip rem">PANEL_STAT</span><br>
+            <span class="field-chip rem">ORGANIZATION_CODE/NAME</span><br>
+            <span class="field-chip rem">TEST TYPES</span>
+            <span class="field-chip rem">SEND OUT ONLY</span><br>
+            <span class="field-chip rem">BILLING TYPE flags</span>
+            <span class="field-chip rem">PECOS</span><br>
+            <span class="field-chip rem">MATCH</span>
+            <span class="field-chip rem">NOTES</span>
+            <span class="field-chip rem">Entered By</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:24px;padding:16px;background:#f7f6f3;border-radius:8px;border:1px solid #e0ddd8;">
+      <div style="font-size:12px;font-weight:600;margin-bottom:8px;">Fields in Final Manifest sent to biller</div>
+      <div style="font-size:12px;line-height:2;">
+        <span class="field-chip">REQ_ACCESSION</span>
+        <span class="field-chip">PATIENT_L/F_NAME</span>
+        <span class="field-chip">PATIENT_GENDER</span>
+        <span class="field-chip">PATIENT_BIRTH</span>
+        <span class="field-chip">PATIENT_ADDRESS–ZIP</span>
+        <span class="field-chip">DOCTOR_L/F_NAME</span>
+        <span class="field-chip">DOCTOR_NPI</span>
+        <span class="field-chip">REQ_COLLECT_DATE</span>
+        <span class="field-chip">REQ_LOCATION_NAME</span>
+        <span class="field-chip">REP</span>
+        <span class="field-chip">INSURANCE_NAME</span>
+        <span class="field-chip">INSURED_POLICY_NO</span>
+        <span class="field-chip">INSURANCE_NAME1</span>
+        <span class="field-chip">INSURED_POLICY_NO1</span>
+        <span class="field-chip">PANEL_NAME</span>
+        <span class="field-chip">DIAGNOSIS_1–20</span>
+        <span class="field-chip">CPT_CODES ×10</span>
+        <span class="field-chip">PANEL_LAB_NAME</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════ PANEL 3: FILE MAP ══════════════════════ -->
+  <div class="panel" id="panel-files">
+
+    <div class="legend">
+      <div class="leg"><div class="leg-dot" style="background:#e8f0fb;border-color:#95b8e8"></div>Source (DM)</div>
+      <div class="leg"><div class="leg-dot" style="background:#fdf3e7;border-color:#f5c080"></div>Working</div>
+      <div class="leg"><div class="leg-dot" style="background:#d4edda;border-color:#7ec89a"></div>Final Output</div>
+      <div class="leg"><div class="leg-dot" style="background:#fde8e8;border-color:#e8a0a0"></div>Log / Tracking</div>
+      <div class="leg"><div class="leg-dot" style="background:#f1f0ed;border-color:#c8c4bc"></div>Reference</div>
+    </div>
+
+    <div class="file-section">
+      <div class="file-section-title">Billing Team — Annabel (Reconciliation & Manifest)</div>
+      <div class="file-row">
+        <div class="file-owner ow-billing">Source</div>
+        <div class="file-list">
+          <div class="file-chip fc-src">3.05.2026_SORTING.XLSX<br><span style="font-size:10px;font-family:sans-serif;">Master DM / Dupes / Compare</span></div>
+          <div class="file-chip fc-src">OHUS_BILLINGREPORT_3.04-15.PDF<br><span style="font-size:10px;font-family:sans-serif;">Biller submission PDF</span></div>
+        </div>
+      </div>
+      <div class="file-row">
+        <div class="file-owner ow-billing">Working</div>
+        <div class="file-list">
+          <div class="file-chip fc-mid">3_04-05_2026_Reconcile.XLSX<br><span style="font-size:10px;font-family:sans-serif;">Full reconciliation workbook (all sheets)</span></div>
+          <div class="file-chip fc-mid">OHUS_Reconciliation_3.04-05.xlsx</div>
+          <div class="file-chip fc-mid">OHUS_Reconciliation_3.04-15_MIXED.xlsx</div>
+          <div class="file-chip fc-ref">OHUS_Reconciliation_FINAL_TEMPLATE</div>
+        </div>
+      </div>
+      <div class="file-row">
+        <div class="file-owner ow-billing">Final</div>
+        <div class="file-list">
+          <div class="file-chip fc-out">OHUS_MANIFEST_3.04-15_MIXED.xlsx</div>
+          <div class="file-chip fc-out">CTON.OHUS_NewGen_StocktonNs_Manifest</div>
+          <div class="file-chip fc-out">CTON.OHUS_PalosVerdes_Manifest</div>
+          <div class="file-chip fc-out">CTON.OHUS_Sunmar_AlcottRehab_Manifest</div>
+        </div>
+      </div>
+      <div class="file-row">
+        <div class="file-owner ow-billing">Logs</div>
+        <div class="file-list">
+          <div class="file-chip fc-log">OHUS_PROBLEMS_MISSINGREQS_MARCH.xlsx</div>
+          <div class="file-chip fc-log">CTON.OHUS_NoINS_MARCH.xlsx</div>
+          <div class="file-chip fc-log">CTON.OHUS_SCAN_DAILY_LIST_MARCH.xlsx</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-section">
+      <div class="file-section-title">QA — Ashley</div>
+      <div class="file-row">
+        <div class="file-owner ow-qa">Working</div>
+        <div class="file-list">
+          <div class="file-chip fc-mid">QA_Billing_RegularAccts_3.05.2026.xlsx</div>
+          <div class="file-chip fc-mid">_Billing_QA_TheOrchard_March_2026.xlsx</div>
+          <div class="file-chip fc-ref">QA_Billing_RegularAccts_TEMPLATE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-section">
+      <div class="file-section-title">CS Team — Vanessa</div>
+      <div class="file-row">
+        <div class="file-owner ow-cs">Logs</div>
+        <div class="file-list">
+          <div class="file-chip fc-log">PROBLEM_DM_MARCH_2026.XLSX</div>
+          <div class="file-chip fc-ref">MILES_LOCATIONS_.xlsx</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-section">
+      <div class="file-section-title">Cash / AR / Bill Client — Maria</div>
+      <div class="file-row">
+        <div class="file-owner ow-maria">Working</div>
+        <div class="file-list">
+          <div class="file-chip fc-mid">CTON_DEPOSIT_LIST_March_06/19/27.xlsx</div>
+          <div class="file-chip fc-mid">CTON_CASH_DEPOSIT_LIST_*.xlsx</div>
+          <div class="file-chip fc-mid">AR_Aging_*.xlsx</div>
+          <div class="file-chip fc-mid">CTON_OHUS_QB_Inv_Pmts_Jan/Feb.xlsx</div>
+        </div>
+      </div>
+      <div class="file-row">
+        <div class="file-owner ow-maria">Final</div>
+        <div class="file-list">
+          <div class="file-chip fc-out">CTON_OHUS_BillClient_February_2026.xlsx</div>
+          <div class="file-chip fc-out">PALOS_VERDES_FINAL_STATEMENT_FEB_2026.xlsx</div>
+          <div class="file-chip fc-out">THE_ORCHARD_FEB_2026_FINAL_STATEMENT.xlsx</div>
+          <div class="file-chip fc-out">SCAL_Community_Care_Feb_2026.xlsx</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="file-section">
+      <div class="file-section-title">Billing Reference Files</div>
+      <div class="file-row">
+        <div class="file-owner ow-ref">Ref</div>
+        <div class="file-list">
+          <div class="file-chip fc-ref">OHCUS_Biller_List_2025_BC_INS_FINAL.xlsx</div>
+          <div class="file-chip fc-ref">SUNMAR_MASTER_PAYER_CODERS.xlsx</div>
+          <div class="file-chip fc-ref">2025_MEDICARE_RATES_JAN_2025.xlsx</div>
+          <div class="file-chip fc-ref">TEST_LIST.xlsx</div>
+          <div class="file-chip fc-ref">Cultures.xlsx</div>
+          <div class="file-chip fc-ref">_TOX_TEST_LIST.xlsx</div>
+          <div class="file-chip fc-ref">Rockport_Providers_NPI_s_2025.xlsx</div>
+          <div class="file-chip fc-ref">PalosVerdes_Prices.xlsx</div>
+          <div class="file-chip fc-ref">Verify_Cancelled_Send_outs_.xlsx</div>
+          <div class="file-chip fc-ref">_UPDATED_proposed_manifest_icd_cpt.xlsx</div>
+          <div class="file-chip fc-ref">CTON_Cred_Grid_PAR_List_2025.xlsx</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function show(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
