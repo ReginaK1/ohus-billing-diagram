@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OHUS — Daily Operations Dashboard</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root{
+  --bg:#f4f2ed;--surface:#fff;--border:#ddd9d0;--text:#1c1b18;--muted:#7a7870;
+  --green:#1a5e2e;--green-bg:#d4edda;--green-bd:#7ec89a;
+  --red:#8a1a1a;--red-bg:#fde8e8;--red-bd:#e8a0a0;
+  --amber:#6b4200;--amber-bg:#fdf3dc;--amber-bd:#e8c870;
+  --blue:#174880;--blue-bg:#e3ecf7;--blue-bd:#85afd8;
+  --purple:#4a2878;--purple-bg:#ece5f7;--purple-bd:#b08ad8;
+  --teal:#1e5c3e;--teal-bg:#e6f4ec;--teal-bd:#8ecfaa;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.hdr{background:var(--text);color:#fff;padding:28px 36px 24px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;}
+.hdr-left .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#777;margin-bottom:6px;}
+.hdr-left h1{font-size:20px;font-weight:600;}
+.hdr-left h1 em{font-weight:300;font-style:normal;font-size:16px;}
+.hdr-right{text-align:right;}
+.date-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#777;margin-bottom:3px;}
+.date-val{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#fff;}
+.date-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#999;margin-top:1px;}
+
+/* MAIN LAYOUT */
+.page{max-width:1080px;margin:0 auto;padding:28px 24px 60px;}
+
+/* SECTION LABELS */
+.sec{margin-bottom:24px;}
+.sec-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.sec-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* KPI CARDS — TOP ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+.kpi{background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden;}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.k-total::before{background:var(--blue-bd);}
+.kpi.k-printed::before{background:var(--green-bd);}
+.kpi.k-problem::before{background:var(--red-bd);}
+.kpi-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.kpi-val{font-family:'IBM Plex Mono',monospace;font-size:42px;font-weight:700;line-height:1;margin-bottom:6px;}
+.kpi.k-total .kpi-val{color:var(--blue);}
+.kpi.k-printed .kpi-val{color:var(--green);}
+.kpi.k-problem .kpi-val{color:var(--red);}
+.kpi-sub{font-size:12px;color:var(--muted);line-height:1.5;}
+.kpi-rate{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-top:6px;}
+.rate-good{background:var(--green-bg);color:var(--green);}
+.rate-warn{background:var(--amber-bg);color:var(--amber);}
+.rate-bad{background:var(--red-bg);color:var(--red);}
+
+/* SECONDARY KPI ROW */
+.kpi-row2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.kpi2{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.kpi2-label{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.kpi2-val{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:700;line-height:1;margin-bottom:4px;}
+.kpi2-sub{font-size:11px;color:var(--muted);}
+
+/* PANELS 2-col */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+.three-col{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;}
+
+/* PANEL */
+.panel-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.panel-title{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+
+/* PROBLEM TABLE */
+.ptbl{width:100%;border-collapse:collapse;font-size:12px;}
+.ptbl th{text-align:left;padding:6px 10px;font-size:10px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--border);font-family:'IBM Plex Mono',monospace;letter-spacing:.05em;text-transform:uppercase;}
+.ptbl td{padding:8px 10px;border-bottom:1px solid #f2f0eb;vertical-align:middle;}
+.ptbl tr:last-child td{border-bottom:none;}
+.ptbl tr:hover td{background:#faf9f7;}
+.status-pill{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:500;}
+.st-problem{background:var(--red-bg);color:var(--red);}
+.st-pending{background:var(--amber-bg);color:var(--amber);}
+.st-recol{background:var(--purple-bg);color:var(--purple);}
+
+/* BILLING BREAKDOWN */
+.bk-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f2f0eb;}
+.bk-row:last-child{border-bottom:none;}
+.bk-label{font-size:12px;flex:1;color:#333;}
+.bk-bar-wrap{flex:2;background:#f2f0eb;border-radius:4px;height:7px;overflow:hidden;}
+.bk-bar{height:100%;border-radius:4px;}
+.bk-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;width:40px;text-align:right;}
+
+/* TREND CHART (simple CSS bars) */
+.trend-wrap{display:flex;align-items:flex-end;gap:6px;height:80px;padding-top:8px;}
+.trend-bar-group{display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;}
+.trend-bar{width:100%;border-radius:3px 3px 0 0;transition:opacity .2s;}
+.trend-bar:hover{opacity:.8;}
+.trend-date{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--muted);margin-top:3px;text-align:center;}
+.trend-legend{display:flex;gap:12px;margin-top:10px;}
+.tleg{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);}
+.tleg-dot{width:8px;height:8px;border-radius:2px;}
+
+/* ACTION LIST */
+.action-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid #f2f0eb;}
+.action-item:last-child{border-bottom:none;}
+.action-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.action-text{font-size:12px;line-height:1.5;color:#333;}
+.action-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px;margin-left:4px;}
+
+/* PENDING LIST */
+.pend-item{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f2f0eb;}
+.pend-item:last-child{border-bottom:none;}
+.pend-label{font-size:12px;color:#333;}
+.pend-count{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;}
+
+/* NOTE BOX */
+.note-box{background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:8px;padding:10px 14px;margin-top:12px;}
+.note-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:3px;}
+.note-box p{font-size:11px;color:#5a3800;line-height:1.6;}
+
+/* DISCLAIMER */
+.disclaimer{background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:8px;padding:12px 16px;margin-bottom:24px;}
+.disclaimer p{font-size:11.5px;color:var(--blue);line-height:1.7;}
+.disclaimer strong{font-weight:600;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="eyebrow">OHUS Open Healthcare US · A to B Project</div>
+    <h1>Daily Operations Dashboard<br><em>Accession & Billing Flow Status</em></h1>
+  </div>
+  <div class="hdr-right">
+    <div class="date-label">Reporting date</div>
+    <div class="date-val" id="today-date">—</div>
+    <div class="date-sub">Data as of yesterday (T-1)</div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="disclaimer">
+    <p><strong>Note:</strong> This dashboard is a design prototype showing the metrics and layout for the To-Be operational monitoring system. In the live version, all figures are pulled directly from LABDAQ (via DataMiner export) and the unified Cash Log. No manual data entry is required to populate this dashboard. Sample data is shown for illustration.</p>
+  </div>
+
+  <!-- PRIMARY KPIs -->
+  <div class="sec-lbl">Yesterday's Key Figures (T-1)</div>
+  <div class="kpi-row">
+    <div class="kpi k-total">
+      <div class="kpi-label">Total REQs Received Yesterday</div>
+      <div class="kpi-val" id="kpi-total">142</div>
+      <div class="kpi-sub">All REQs accessioned on T-1<br>regardless of result status</div>
+      <span class="kpi-rate rate-good">↑ +8 vs prior week avg</span>
+    </div>
+    <div class="kpi k-printed">
+      <div class="kpi-label">Printed REQs (Result Complete)</div>
+      <div class="kpi-val" id="kpi-printed">118</div>
+      <div class="kpi-sub">REQ_PRINTED_DATE set in LABDAQ<br>→ billing-eligible today</div>
+      <span class="kpi-rate rate-good">83% print rate</span>
+    </div>
+    <div class="kpi k-problem">
+      <div class="kpi-label">Problem Panel Cases</div>
+      <div class="kpi-val" id="kpi-problem">7</div>
+      <div class="kpi-sub">Specimen quality issues<br>requiring re-collection or cancellation</div>
+      <span class="kpi-rate rate-warn">4.9% problem rate</span>
+    </div>
+  </div>
+
+  <!-- SECONDARY KPIs -->
+  <div class="kpi-row2">
+    <div class="kpi2">
+      <div class="kpi2-label">Send-Out Cases</div>
+      <div class="kpi2-val" style="color:var(--purple);">17</div>
+      <div class="kpi2-sub">PANEL_LAB_NAME ≠ Open Healthcare<br>Excluded from insurance billing</div>
+    </div>
+    <div class="kpi2">
+      <div class="kpi2-label">Billing-Eligible (Insurance)</div>
+      <div class="kpi2-val" style="color:var(--blue);">89</div>
+      <div class="kpi2-sub">Printed + Open Healthcare<br>Ready for manifest today</div>
+    </div>
+    <div class="kpi2">
+      <div class="kpi2-label">Bill Client Cases</div>
+      <div class="kpi2-val" style="color:var(--teal);">22</div>
+      <div class="kpi2-sub">Accumulated toward<br>monthly invoice</div>
+    </div>
+    <div class="kpi2">
+      <div class="kpi2-label">Cash / Card</div>
+      <div class="kpi2-val" style="color:var(--muted);">7</div>
+      <div class="kpi2-sub">Already collected<br>→ Cash Log entry only</div>
+    </div>
+  </div>
+
+  <!-- BILLING BREAKDOWN + PROBLEM DETAIL -->
+  <div class="two-col">
+
+    <div class="panel-box">
+      <div class="panel-title">Yesterday's REQ Breakdown</div>
+      <div class="bk-row">
+        <div class="bk-label">🔵 Insurance (billing-eligible)</div>
+        <div class="bk-bar-wrap"><div class="bk-bar" style="width:63%;background:var(--blue-bd);"></div></div>
+        <div class="bk-val" style="color:var(--blue);">89</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-label">🟤 Bill Client</div>
+        <div class="bk-bar-wrap"><div class="bk-bar" style="width:15%;background:var(--teal-bd);"></div></div>
+        <div class="bk-val" style="color:var(--teal);">22</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-label">🟣 Send-Out Only</div>
+        <div class="bk-bar-wrap"><div class="bk-bar" style="width:12%;background:var(--purple-bd);"></div></div>
+        <div class="bk-val" style="color:var(--purple);">17</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-label">🔴 Problem Panel</div>
+        <div class="bk-bar-wrap"><div class="bk-bar" style="width:5%;background:var(--red-bd);"></div></div>
+        <div class="bk-val" style="color:var(--red);">7</div>
+      </div>
+      <div class="bk-row">
+        <div class="bk-label">⚪ Cash / Card</div>
+        <div class="bk-bar-wrap"><div class="bk-bar" style="width:5%;background:#ccc;"></div></div>
+        <div class="bk-val" style="color:var(--muted);">7</div>
+      </div>
+      <div class="note-box" style="margin-top:14px;">
+        <div class="note-lbl">How to read this</div>
+        <p>Figures derived from LABDAQ DataMiner export filtered by REQ_PRINTED_DATE. Send-out identified by PANEL_LAB_NAME ≠ "Open Healthcare". Problem Panel identified by LABDAQ problem flag. No manual calculation required.</p>
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <div class="panel-title">Problem Panel Detail — Open Cases</div>
+      <table class="ptbl">
+        <thead><tr><th>REQ #</th><th>Issue Type</th><th>Day</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4821</td><td style="font-size:11px;">Hemolysis</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 1</td><td><span class="status-pill st-problem">New</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4818</td><td style="font-size:11px;">Insufficient volume</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 1</td><td><span class="status-pill st-problem">New</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4815</td><td style="font-size:11px;">Wrong tube type</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 2</td><td><span class="status-pill st-pending">Re-col requested</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4809</td><td style="font-size:11px;">Degraded sample</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 3</td><td><span class="status-pill st-recol">Re-collecting</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4802</td><td style="font-size:11px;">Hemolysis</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 5</td><td><span class="status-pill st-pending">Follow-up needed</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4798</td><td style="font-size:11px;">Insufficient volume</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 6</td><td><span class="status-pill st-pending">Day 6 — urgent</span></td></tr>
+          <tr><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">REQ-4791</td><td style="font-size:11px;">Wrong tube type</td><td style="font-family:'IBM Plex Mono',monospace;font-size:11px;">Day 7</td><td><span class="status-pill st-problem">⚠ Day 7 — cancel</span></td></tr>
+        </tbody>
+      </table>
+      <div class="note-box" style="margin-top:10px;">
+        <div class="note-lbl">⚠ 7-Day Rule</div>
+        <p>Cases at Day 7 without successful re-collection must be cancelled and REQ closed in LABDAQ today.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7-DAY TREND -->
+  <div class="sec-lbl">7-Day Trend</div>
+  <div class="panel-box" style="margin-bottom:24px;">
+    <div class="panel-title">Daily REQ Volume — Last 7 Days</div>
+    <div style="display:flex;gap:12px;align-items:flex-end;">
+      <div style="flex:1;">
+        <div class="trend-wrap" id="trend-chart">
+          <!-- JS-generated bars -->
+        </div>
+        <div class="trend-legend">
+          <div class="tleg"><div class="tleg-dot" style="background:var(--blue-bd);"></div>Total REQs</div>
+          <div class="tleg"><div class="tleg-dot" style="background:var(--green-bd);"></div>Printed (result complete)</div>
+          <div class="tleg"><div class="tleg-dot" style="background:var(--red-bd);"></div>Problem Panel</div>
+        </div>
+      </div>
+      <div style="width:160px;padding-left:16px;border-left:1px solid var(--border);">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">7-Day Avg</div>
+        <div style="margin-bottom:8px;"><div style="font-size:11px;color:var(--muted);">Total REQs</div><div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--blue);">136</div></div>
+        <div style="margin-bottom:8px;"><div style="font-size:11px;color:var(--muted);">Print rate</div><div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--green);">81%</div></div>
+        <div><div style="font-size:11px;color:var(--muted);">Problem rate</div><div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:700;color:var(--red);">5.1%</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TODAY'S ACTIONS + PENDING -->
+  <div class="three-col">
+
+    <div class="panel-box">
+      <div class="panel-title">Today's Required Actions</div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--blue-bd);"></div>
+        <div class="action-text">Run DM extraction for yesterday's Printed REQs (118 cases)<span class="action-tag" style="background:var(--blue-bg);color:var(--blue);">LABDAQ</span></div>
+      </div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--blue-bd);"></div>
+        <div class="action-text">Complete Reconciliation for extracted DM<span class="action-tag" style="background:var(--blue-bg);color:var(--blue);">Excel</span></div>
+      </div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--blue-bd);"></div>
+        <div class="action-text">QA review + generate Final Manifest (insurance track: 89 cases)<span class="action-tag" style="background:var(--blue-bg);color:var(--blue);">Excel</span></div>
+      </div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--blue-bd);"></div>
+        <div class="action-text">Bulk export REQ PDFs via LABORA; submit manifest package to PRG<span class="action-tag" style="background:var(--blue-bg);color:var(--blue);">LABORA + PRG</span></div>
+      </div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--red-bd);"></div>
+        <div class="action-text">Follow up on Problem Panel cases — especially REQ-4791 (Day 7: cancel if no re-collection)<span class="action-tag" style="background:var(--red-bg);color:var(--red);">Urgent</span></div>
+      </div>
+      <div class="action-item">
+        <div class="action-dot" style="background:var(--red-bd);"></div>
+        <div class="action-text">Contact client for REQ-4802, REQ-4798 re-collection (Days 5–6)<span class="action-tag" style="background:var(--amber-bg);color:var(--amber);">Follow-up</span></div>
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <div class="panel-title">Billing Queue Status</div>
+      <div class="pend-item">
+        <div class="pend-label">Insurance cases ready for manifest</div>
+        <div class="pend-count" style="color:var(--blue);">89</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Bill Client cases (MTD accumulated)</div>
+        <div class="pend-count" style="color:var(--teal);">388</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Culture cases pending CPT entry</div>
+        <div class="pend-count" style="color:var(--purple);">11</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Send-out only (excluded)</div>
+        <div class="pend-count" style="color:var(--muted);">17</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">QA pending — not yet cleared</div>
+        <div class="pend-count" style="color:var(--amber);">5</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Cash Log entries today</div>
+        <div class="pend-count" style="color:var(--muted);">7</div>
+      </div>
+    </div>
+
+    <div class="panel-box">
+      <div class="panel-title">AR & Denial Snapshot</div>
+      <div class="pend-item">
+        <div class="pend-label">Open AR — 0–30 days</div>
+        <div class="pend-count" style="color:var(--green);">$84,200</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Open AR — 31–60 days</div>
+        <div class="pend-count" style="color:var(--amber);">$22,800</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Open AR — 61–90 days ⚠</div>
+        <div class="pend-count" style="color:var(--red);">$8,400</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Open AR — 90+ days</div>
+        <div class="pend-count" style="color:var(--red);">$3,100</div>
+      </div>
+      <div class="pend-item" style="margin-top:4px;border-top:1px solid var(--border);padding-top:10px;">
+        <div class="pend-label">Denial rate (MTD)</div>
+        <div class="pend-count" style="color:var(--amber);">4.2%</div>
+      </div>
+      <div class="pend-item">
+        <div class="pend-label">Denials pending correction</div>
+        <div class="pend-count" style="color:var(--red);">14</div>
+      </div>
+      <div class="note-box" style="margin-top:10px;">
+        <div class="note-lbl">⚠ Action required</div>
+        <p>61–90 day AR ($8,400) triggers Step 07 follow-up. 14 correctable denials awaiting resubmission to PRG.</p>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- /page -->
+
+<script>
+// Set today's date
+const d = new Date();
+const opts = {weekday:'short',year:'numeric',month:'short',day:'numeric'};
+document.getElementById('today-date').textContent = d.toLocaleDateString('en-US',opts);
+
+// 7-day trend chart
+const trendData = [
+  {date:'Mon',total:128,printed:102,problem:6},
+  {date:'Tue',total:134,printed:109,problem:7},
+  {date:'Wed',total:141,printed:116,problem:8},
+  {date:'Thu',total:129,printed:104,problem:5},
+  {date:'Fri',total:138,printed:111,problem:6},
+  {date:'Sat',total:88,printed:70,problem:3},
+  {date:'Yesterday',total:142,printed:118,problem:7},
+];
+const maxVal = Math.max(...trendData.map(d=>d.total));
+const chartH = 80;
+const chart = document.getElementById('trend-chart');
+chart.innerHTML = '';
+trendData.forEach(day=>{
+  const g = document.createElement('div');
+  g.className = 'trend-bar-group';
+  g.style.cssText = 'display:flex;flex-direction:column;align-items:center;flex:1;gap:2px;justify-content:flex-end;height:100%;';
+  const totalH = Math.round((day.total/maxVal)*chartH);
+  const printH = Math.round((day.printed/maxVal)*chartH);
+  const probH = Math.max(Math.round((day.problem/maxVal)*chartH),2);
+  g.innerHTML = `
+    <div title="${day.problem} problem" class="trend-bar" style="height:${probH}px;background:#e8a0a0;width:100%;"></div>
+    <div title="${day.printed} printed" class="trend-bar" style="height:${printH-probH}px;background:#7ec89a;width:100%;"></div>
+    <div title="${day.total} total" class="trend-bar" style="height:${totalH-printH}px;background:#85afd8;width:100%;"></div>
+    <div class="trend-date">${day.date}</div>
+  `;
+  chart.appendChild(g);
+});
+</script>
+</body>
+</html>

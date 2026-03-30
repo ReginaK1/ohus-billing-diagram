@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OHUS — To-Be Process Map</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+:root {
+  --bg:#f4f2ed;--surface:#fff;--border:#ddd9d0;--text:#1c1b18;--muted:#7a7870;
+  --s0:#1e5c3e;--s0-bg:#e6f4ec;--s0-bd:#8ecfaa;
+  --s1:#174880;--s1-bg:#e3ecf7;--s1-bd:#85afd8;
+  --s2:#4a2878;--s2-bg:#ece5f7;--s2-bd:#b08ad8;
+  --s3:#7a4010;--s3-bg:#f7ece3;--s3-bd:#d8a885;
+  --s4:#7a1818;--s4-bg:#f7e3e3;--s4-bd:#d88585;
+  --s5:#1a5038;--s5-bg:#e3f5ec;--s5-bd:#85d8aa;
+  --s6:#383878;--s6-bg:#e5e5f7;--s6-bd:#9898d8;
+  --s7:#3a3a3a;--s7-bg:#f0f0f0;--s7-bd:#b0b0b0;
+  --add:#1a5e2e;--add-bg:#d4edda;--add-bd:#7ec89a;
+  --del:#8a1a1a;--del-bg:#fde8e8;--del-bd:#e8a0a0;
+  --warn:#6b4200;--warn-bg:#fdf3dc;--warn-bd:#e8c870;
+  --sys:#1a3a5a;--sys-bg:#ddeaf8;--sys-bd:#7aaad9;
+  --gate:#5a3e00;--gate-bg:#fffae8;--gate-bd:#d4aa30;
+  --prob:#6b1a4a;--prob-bg:#f7e3f0;--prob-bd:#d88abd;
+  --snf:#2a4a6a;--snf-bg:#e0eaf5;--snf-bd:#7aaac8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--text);}
+.hdr{background:var(--text);color:#fff;padding:32px 40px 26px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#777;margin-bottom:8px;}
+.hdr h1{font-size:22px;font-weight:600;line-height:1.3;}
+.hdr h1 em{font-weight:300;font-style:normal;font-size:17px;}
+.hdr-meta{font-size:11px;color:#777;margin-top:5px;font-family:'IBM Plex Mono',monospace;}
+.badges{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap;}
+.bdg{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 9px;border-radius:4px;font-weight:500;}
+.bdg-add{background:var(--add-bg);color:var(--add);}
+.bdg-del{background:var(--del-bg);color:var(--del);}
+.bdg-sys{background:var(--sys-bg);color:var(--sys);}
+.bdg-gate{background:var(--gate-bg);color:var(--gate);}
+.bdg-prob{background:var(--prob-bg);color:var(--prob);}
+.tabs{display:flex;background:var(--text);border-top:1px solid #2e2e2e;overflow-x:auto;}
+.tab{padding:10px 18px;font-size:11px;font-weight:500;cursor:pointer;color:#777;border-bottom:2px solid transparent;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;transition:all .15s;white-space:nowrap;}
+.tab.active{color:#fff;border-bottom-color:#fff;}
+.tab:hover:not(.active){color:#bbb;}
+.panel{display:none;}.panel.active{display:block;}
+.page{max-width:1060px;margin:0 auto;padding:28px 24px 80px;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:24px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:#555;}
+.leg-dot{width:10px;height:10px;border-radius:3px;border:1px solid;flex-shrink:0;}
+/* FLOW */
+.flow-wrap{display:flex;flex-direction:column;align-items:center;gap:0;}
+.fnode{border-radius:10px;border:1.5px solid;padding:14px 18px;width:100%;max-width:700px;background:var(--surface);}
+.fnode-sys{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;background:var(--sys-bg);color:var(--sys);border:1px solid var(--sys-bd);margin-bottom:7px;}
+.fnode-title{font-size:13px;font-weight:600;margin-bottom:6px;}
+.fnode-actions{list-style:none;}
+.fnode-actions li{font-size:11.5px;line-height:1.65;padding:3px 0 3px 14px;position:relative;border-bottom:1px solid #f2f0eb;color:#2a2a2a;}
+.fnode-actions li:last-child{border-bottom:none;}
+.fnode-actions li::before{content:'→';position:absolute;left:0;color:var(--muted);font-size:10px;top:5px;}
+.fnode-actions li strong{font-weight:600;}
+.sbadge{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;margin-bottom:7px;display:inline-block;}
+.fn0{border-color:var(--s0-bd);}.fn0 .fnode-title{color:var(--s0);}
+.fn1{border-color:var(--s1-bd);}.fn1 .fnode-title{color:var(--s1);}
+.fn2{border-color:var(--s2-bd);}.fn2 .fnode-title{color:var(--s2);}
+.fn3{border-color:var(--s3-bd);}.fn3 .fnode-title{color:var(--s3);}
+.fn4{border-color:var(--s4-bd);}.fn4 .fnode-title{color:var(--s4);}
+.fn5{border-color:var(--s5-bd);}.fn5 .fnode-title{color:var(--s5);}
+.fn6{border-color:var(--s6-bd);}.fn6 .fnode-title{color:var(--s6);}
+.fn7{border-color:var(--s7-bd);}.fn7 .fnode-title{color:var(--s7);}
+.fgate{background:var(--gate-bg);border:1.5px dashed var(--gate-bd);border-radius:8px;padding:10px 14px;width:100%;max-width:700px;}
+.fgate-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gate);margin-bottom:4px;}
+.fgate ul{list-style:none;}
+.fgate ul li{font-size:11px;line-height:1.65;padding-left:15px;position:relative;color:#5a4200;}
+.fgate ul li::before{content:'⊘';position:absolute;left:0;color:#b08800;font-size:9px;top:3px;}
+.fprob{background:var(--prob-bg);border:1.5px solid var(--prob-bd);border-radius:8px;padding:10px 14px;width:100%;max-width:700px;}
+.fprob-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--prob);margin-bottom:4px;}
+.fprob ul{list-style:none;}
+.fprob ul li{font-size:11px;line-height:1.65;padding-left:13px;position:relative;color:#5a1040;}
+.fprob ul li::before{content:'◆';position:absolute;left:0;color:var(--prob);font-size:8px;top:4px;}
+.fwarn{background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:7px;padding:8px 12px;width:100%;max-width:700px;}
+.fwarn-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:3px;}
+.fwarn p{font-size:11px;color:#5a3800;line-height:1.6;}
+.farr{display:flex;flex-direction:column;align-items:center;padding:3px 0;}
+.farr-line{width:1.5px;height:22px;background:var(--border);}
+.farr-head{font-size:15px;color:#aaa;line-height:1;}
+.farr-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);margin-top:1px;letter-spacing:.04em;}
+.branch-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:700px;}
+.bcard{border-radius:8px;border:1px solid;padding:11px 13px;}
+.bcard-ins{border-color:var(--s1-bd);background:var(--s1-bg);}
+.bcard-bc{border-color:var(--s3-bd);background:var(--s3-bg);}
+.bcard-cash{border-color:var(--s5-bd);background:var(--s5-bg);}
+.bcard-title{font-size:11px;font-weight:600;margin-bottom:5px;}
+.bcard-ins .bcard-title{color:var(--s1);}
+.bcard-bc .bcard-title{color:var(--s3);}
+.bcard-cash .bcard-title{color:var(--s5);}
+.bcard ul{list-style:none;}
+.bcard ul li{font-size:10.5px;line-height:1.65;padding-left:11px;position:relative;color:#333;}
+.bcard ul li::before{content:'·';position:absolute;left:2px;font-size:13px;line-height:1.2;}
+/* DETAIL */
+.step-row{display:grid;grid-template-columns:130px 1fr;gap:18px;align-items:start;}
+.step-meta{padding-top:16px;}
+.step-phase{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.step-num{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:600;line-height:1;margin-bottom:5px;}
+.sys-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:2px 7px;border-radius:3px;background:var(--sys-bg);color:var(--sys);border:1px solid var(--sys-bd);}
+.card{border-radius:10px;border:1.5px solid;padding:16px 20px;background:var(--surface);}
+.card-title{font-size:14px;font-weight:600;margin-bottom:6px;}
+.card-desc{font-size:12px;line-height:1.75;color:#3a3a3a;}
+.c0{border-color:var(--s0-bd);}.c0 .card-title{color:var(--s0);}
+.c1{border-color:var(--s1-bd);}.c1 .card-title{color:var(--s1);}
+.c2{border-color:var(--s2-bd);}.c2 .card-title{color:var(--s2);}
+.c3{border-color:var(--s3-bd);}.c3 .card-title{color:var(--s3);}
+.c4{border-color:var(--s4-bd);}.c4 .card-title{color:var(--s4);}
+.c5{border-color:var(--s5-bd);}.c5 .card-title{color:var(--s5);}
+.c6{border-color:var(--s6-bd);}.c6 .card-title{color:var(--s6);}
+.c7{border-color:var(--s7-bd);}.c7 .card-title{color:var(--s7);}
+.inner{margin-top:12px;}
+.inner-title{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;padding-bottom:3px;border-bottom:1px solid var(--border);}
+.act-list{list-style:none;}
+.act-list li{font-size:12px;line-height:1.65;padding:3px 0 3px 15px;position:relative;color:#2a2a2a;border-bottom:1px solid #f2f0eb;}
+.act-list li:last-child{border-bottom:none;}
+.act-list li::before{content:'→';position:absolute;left:0;color:var(--muted);font-size:10px;top:5px;}
+.act-list li strong{font-weight:600;}
+.gate-box{background:var(--gate-bg);border:1.5px dashed var(--gate-bd);border-radius:8px;padding:10px 13px;margin-top:11px;}
+.gate-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gate);margin-bottom:4px;}
+.gate-box ul{list-style:none;}
+.gate-box ul li{font-size:11px;line-height:1.65;padding-left:15px;position:relative;color:#5a4200;}
+.gate-box ul li::before{content:'⊘';position:absolute;left:0;color:#b08800;font-size:9px;top:3px;}
+.warn-box{background:var(--warn-bg);border:1px solid var(--warn-bd);border-radius:7px;padding:9px 12px;margin-top:11px;}
+.warn-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn);margin-bottom:3px;}
+.warn-box p{font-size:11px;color:#5a3800;line-height:1.65;}
+.prob-box{background:var(--prob-bg);border:1.5px solid var(--prob-bd);border-radius:8px;padding:11px 13px;margin-top:11px;}
+.prob-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--prob);margin-bottom:5px;}
+.prob-box ul{list-style:none;}
+.prob-box ul li{font-size:11px;line-height:1.65;padding-left:13px;position:relative;color:#5a1040;}
+.prob-box ul li::before{content:'◆';position:absolute;left:0;color:var(--prob);font-size:8px;top:4px;}
+.snf-box{background:var(--snf-bg);border:1.5px solid var(--snf-bd);border-radius:8px;padding:11px 13px;margin-top:11px;}
+.snf-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--snf);margin-bottom:5px;}
+.snf-box ul{list-style:none;}
+.snf-box ul li{font-size:11px;line-height:1.65;padding-left:13px;position:relative;color:#1a3a5a;}
+.snf-box ul li::before{content:'·';position:absolute;left:2px;font-size:13px;line-height:1.2;}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:11px;}
+.d-box{border-radius:7px;padding:9px 12px;}
+.d-box.add{background:var(--add-bg);border:1px solid var(--add-bd);}
+.d-box.del{background:var(--del-bg);border:1px solid var(--del-bd);}
+.d-lbl{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;}
+.d-box.add .d-lbl{color:var(--add);}
+.d-box.del .d-lbl{color:var(--del);}
+.d-box ul{list-style:none;}
+.d-box ul li{font-size:11px;line-height:1.65;padding-left:12px;position:relative;color:#333;}
+.d-box.add ul li::before{content:'+';position:absolute;left:0;color:var(--add);font-weight:700;}
+.d-box.del ul li::before{content:'−';position:absolute;left:0;color:var(--del);font-weight:700;}
+.connector{display:flex;align-items:center;gap:10px;padding:10px 0 10px 130px;color:var(--muted);font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.conn-line{flex:1;height:1px;background:var(--border);}
+.conn-arr{font-size:18px;color:#bbb;}
+/* TABLES */
+.sec-div{margin:24px 0 16px;display:flex;align-items:center;gap:12px;}
+.sec-div-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+.sec-div-line{flex:1;height:1px;background:var(--border);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px;}
+.tbl th{background:var(--text);color:#fff;text-align:left;padding:9px 13px;font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;font-family:'IBM Plex Mono',monospace;}
+.tbl td{padding:10px 13px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.65;}
+.tbl tr:hover td{background:#faf9f7;}
+.fc{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:1px 6px;border-radius:3px;margin:2px 2px 0 0;}
+.fc-a{background:var(--add-bg);color:var(--add);}
+.fc-d{background:var(--del-bg);color:var(--del);text-decoration:line-through;}
+.fc-n{background:#f1f0ed;color:#555;}
+/* PRG Timeline */
+.prg-wrap{max-width:760px;margin-top:16px;}
+.prg-item{display:grid;grid-template-columns:150px 1fr;gap:0;align-items:stretch;margin-bottom:0;}
+.prg-left{padding:10px 16px 10px 0;text-align:right;border-right:2px solid var(--border);position:relative;}
+.prg-left::after{content:'';position:absolute;right:-5px;top:50%;transform:translateY(-50%);width:8px;height:8px;border-radius:50%;background:var(--border);}
+.prg-item.done .prg-left::after{background:var(--add);}
+.prg-item.now .prg-left::after{background:#e8a030;}
+.prg-item.next .prg-left::after{background:var(--s1-bd);}
+.prg-item.blocked .prg-left::after{background:#ccc;}
+.prg-label{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--muted);}
+.prg-right{padding:10px 0 10px 16px;}
+.prg-title{font-size:12px;font-weight:600;margin-bottom:3px;}
+.prg-body{font-size:11px;color:#555;line-height:1.6;}
+.prg-item.done .prg-title{color:var(--add);}
+.prg-item.now .prg-title{color:#b06000;}
+.prg-item.next .prg-title{color:var(--s1);}
+.prg-item.blocked .prg-title{color:#999;}
+.prg-cond{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 8px;border-radius:4px;margin-top:4px;}
+.cond-done{background:var(--add-bg);color:var(--add);}
+.cond-now{background:#fdf3dc;color:#b06000;}
+.cond-block{background:var(--del-bg);color:var(--del);}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="eyebrow">A to B Project · OHUS Open Healthcare US</div>
+  <h1>To-Be Process Map<br><em>Billing Data Flow — Target State</em></h1>
+  <div class="hdr-meta">v2.0 · March 2026 · Actions & systems only — role assignment is separate</div>
+  <div class="badges">
+    <span class="bdg bdg-add">✚ Added</span>
+    <span class="bdg bdg-del">− Removed</span>
+    <span class="bdg bdg-sys">⬡ System</span>
+    <span class="bdg bdg-gate">⊘ Block gate</span>
+    <span class="bdg bdg-prob">◆ Problem Panel</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="show('flow',this)">① Flow Overview</div>
+  <div class="tab" onclick="show('detail',this)">② Step Detail</div>
+  <div class="tab" onclick="show('billing',this)">③ Billing Branches</div>
+  <div class="tab" onclick="show('prg',this)">④ PRG Transition</div>
+  <div class="tab" onclick="show('compare',this)">⑤ As-Is vs To-Be</div>
+</div>
+
+<!-- ══ PANEL 1: FLOW ══ -->
+<div class="panel active" id="panel-flow">
+<div class="page">
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:var(--add-bg);border-color:var(--add-bd);"></div>Added</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--del-bg);border-color:var(--del-bd);"></div>Removed</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--gate-bg);border-color:var(--gate-bd);"></div>Block gate</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--prob-bg);border-color:var(--prob-bd);"></div>Problem Panel → re-collection</div>
+  <div class="leg"><div class="leg-dot" style="background:var(--warn-bg);border-color:var(--warn-bd);"></div>Design / risk note</div>
+</div>
+<div class="flow-wrap">
+
+  <div class="fnode fn0" style="background:var(--s0-bg);">
+    <div class="fnode-sys">LABORA</div>
+    <div class="sbadge" style="background:var(--s0-bg);color:var(--s0);border:1px solid var(--s0-bd);">STEP 00 — Electronic Requisition</div>
+    <div class="fnode-title">At the time of specimen collection, an electronic requisition is created.</div>
+    <ul class="fnode-actions">
+      <li>Patient demographics, insurance, NPI, ICD-10, ordered tests, and billing type are entered</li>
+      <li>Billing type explicitly selected: <strong>Insurance / Bill Client / Cash / Card</strong></li>
+      <li>Data is pushed directly into LABDAQ upon submission</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div></div>
+  <div class="fgate">
+    <div class="fgate-lbl">⊘ Block Gate — submission prevented if:</div>
+    <ul>
+      <li>ICD-10 diagnosis code is missing</li>
+      <li>Ordering provider NPI is absent</li>
+      <li>Primary insurance missing (for Insurance / SNF type)</li>
+      <li>Billing type not selected</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">LABORA → LABDAQ sync</div></div>
+
+  <div class="fnode fn1" style="background:var(--s1-bg);">
+    <div class="fnode-sys">LABDAQ</div>
+    <div class="sbadge" style="background:var(--s1-bg);color:var(--s1);border:1px solid var(--s1-bd);">STEP 01 — Specimen Accession</div>
+    <div class="fnode-title">Specimen integrity is verified and LABDAQ data is confirmed.</div>
+    <ul class="fnode-actions">
+      <li>Specimen integrity assessed: volume, condition, tube type, match to ordered tests</li>
+      <li>LABDAQ data (from LABORA) confirmed — corrections made in LABDAQ if needed</li>
+      <li>Classified: <strong>Ready for Testing / Problem Panel / Cancel</strong></li>
+      <li>ORGANIZATION_TYPE set per client: Facility / Physician / B2B</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div></div>
+  <div class="fprob">
+    <div class="fprob-lbl">◆ Problem Panel — Specimen Issue</div>
+    <ul>
+      <li>Specimen cannot be tested due to physical quality issues (hemolysis, insufficient volume, wrong tube, degraded sample)</li>
+      <li>Flagged in LABDAQ — visible via DM filter; <strong>no separate Excel log</strong></li>
+      <li>Client contacted for <strong>re-collection</strong> → re-enters at Step 00 if successful</li>
+      <li>Not resolved within 7 days → order cancelled; REQ closed in LABDAQ</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">Lab QA/QC complete</div></div>
+
+  <div class="fnode fn1">
+    <div class="fnode-sys">LABORA</div>
+    <div class="sbadge" style="background:var(--s1-bg);color:var(--s1);border:1px solid var(--s1-bd);">STEP 01b — REQ Scan</div>
+    <div class="fnode-title">After accession is complete, the paper REQ is scanned and linked.</div>
+    <ul class="fnode-actions">
+      <li>REQ is scanned following accession completion</li>
+      <li>Scan uploaded to LABORA → linked to accession number in LABDAQ</li>
+      <li>Stored on server with <strong>REQ number as filename</strong> — enables bulk retrieval at Step 04</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">REQ_PRINTED_DATE set → billing eligible</div></div>
+
+  <div class="fnode fn2" style="background:var(--s2-bg);">
+    <div class="fnode-sys">LABDAQ / DataMiner</div>
+    <div class="sbadge" style="background:var(--s2-bg);color:var(--s2);border:1px solid var(--s2-bd);">STEP 02 — Daily DM Extraction</div>
+    <div class="fnode-title">Daily export filtered by REQ_PRINTED_DATE — single source of truth for billing and AR.</div>
+    <ul class="fnode-actions">
+      <li><strong>Insurance eligible:</strong> REQ_PRINTED_DATE present AND PANEL_LAB_NAME = "Open Healthcare"</li>
+      <li><strong>Send-out:</strong> PANEL_LAB_NAME ≠ "Open Healthcare" → identified at extraction; no separate log file</li>
+      <li><strong>Problem Panel:</strong> excluded via LABDAQ flag; no separate log file</li>
+      <li>Expected AR recognized at extraction (accrual basis) using Price Group in LABDAQ</li>
+      <li>Snapshot locked after extraction — changes tracked in COMPARE sheet next day</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">Master DM → Reconciliation</div></div>
+
+  <div class="fnode fn3" style="background:var(--s3-bg);">
+    <div class="fnode-sys">Excel — Standardized Template</div>
+    <div class="sbadge" style="background:var(--s3-bg);color:var(--s3);border:1px solid var(--s3-bd);">STEP 03 — Reconciliation</div>
+    <div class="fnode-title">Master DM enriched via VLOOKUP; cases routed to correct billing stream.</div>
+    <ul class="fnode-actions">
+      <li>PECOS, REP, BILLING TYPE, TEST TYPES added via VLOOKUP from Rep List and TEST LIST</li>
+      <li>Culture cases <strong>auto-detected</strong> → routed to Cultures sheet (no manual search)</li>
+      <li>Send-out cases → Send out only sheet (no separate file)</li>
+      <li>SNF: insurance attempted first; reclassified to Bill Client if insurance unavailable</li>
+      <li>All reference files versioned with designated owners</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div></div>
+
+  <div class="fnode fn4" style="background:var(--s4-bg);">
+    <div class="fnode-sys">Excel + LABORA</div>
+    <div class="sbadge" style="background:var(--s4-bg);color:var(--s4);border:1px solid var(--s4-bd);">STEP 04 — QA & Final Manifest</div>
+    <div class="fnode-title">QA review confirms billing readiness. Two Manifest versions produced: Internal and Biller-facing.</div>
+    <ul class="fnode-actions">
+      <li>Address, NPI/PECOS, insurance, diagnosis, Draw/Travel fee verified per case</li>
+      <li>REQ PDFs bulk-exported from LABORA by REQ# list — no date-batch search</li>
+      <li>Biller-facing Manifest: all internal fields stripped (REP, PECOS, QA fields, etc.)</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">Billing track split</div></div>
+
+  <div class="branch-3">
+    <div class="bcard bcard-ins">
+      <div class="bcard-title">Track A — Insurance</div>
+      <ul>
+        <li>Manifest + REQ PDFs + Billing Report → PRG (CollaborateMD)</li>
+        <li>Daily by Date of Service</li>
+        <li>No direct LABDAQ access to PRG</li>
+      </ul>
+    </div>
+    <div class="bcard bcard-bc">
+      <div class="bcard-title">Track B — Bill Client</div>
+      <ul>
+        <li>Monthly invoice via QuickBooks</li>
+        <li>Pricing from Client Price Master only</li>
+        <li>Draw/Travel fee verified before invoice</li>
+      </ul>
+    </div>
+    <div class="bcard bcard-cash">
+      <div class="bcard-title">Track C — Cash / Card</div>
+      <ul>
+        <li>No biller submission</li>
+        <li>Unified Cash Log (Excel only)</li>
+        <li>EFT forwarded to PRG daily</li>
+      </ul>
+    </div>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">Payment received → AR posting</div></div>
+
+  <div class="fnode fn6" style="background:var(--s6-bg);">
+    <div class="fnode-sys">QuickBooks / CollaborateMD</div>
+    <div class="sbadge" style="background:var(--s6-bg);color:var(--s6);border:1px solid var(--s6-bd);">STEP 06 — AR Posting</div>
+    <div class="fnode-title">Payments posted against expected AR. AR Aging reviewed weekly.</div>
+    <ul class="fnode-actions">
+      <li>EFT forwarded to PRG for EOB breakdown → posted to QuickBooks AR per test</li>
+      <li>EOB spot-check: ≥20% reviewed by second party</li>
+      <li>AR Aging: 0–30 / 31–60 / 61–90 / 90+ days; 61–90d triggers Step 07</li>
+    </ul>
+  </div>
+  <div class="farr"><div class="farr-line"></div><div class="farr-head">↓</div><div class="farr-lbl">Unpaid / denied → denial management</div></div>
+
+  <div class="fnode fn7">
+    <div class="fnode-sys">CollaborateMD / QuickBooks</div>
+    <div class="sbadge" style="background:var(--s7-bg);color:var(--s7);border:1px solid var(--s7-bd);">STEP 07 — Denial Management & AR Recovery</div>
+    <div class="fnode-title">Denied claims and overdue AR managed. Monthly analysis feeds back upstream.</div>
+    <ul class="fnode-actions">
+      <li>Denials classified: Correctable / Non-correctable / Timely Filing at Risk</li>
+      <li>Bill Client AR: 31–60d reminder → 61–90d follow-up → 90d+ escalation</li>
+      <li>Monthly denial pattern → root cause fed back to Step 00 or Step 05</li>
+      <li>Denial rate KPI: target &lt;5% of submitted claims</li>
+    </ul>
+  </div>
+
+</div></div></div>
+
+<!-- ══ PANEL 2: STEP DETAIL ══ -->
+<div class="panel" id="panel-detail">
+<div class="page">
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">Pre-Intake</div><div class="step-num" style="color:var(--s0)">00</div><div class="sys-tag">LABORA</div></div>
+  <div class="card c0">
+    <div class="card-title">Electronic Requisition Creation</div>
+    <div class="card-desc">At the time of specimen collection, an electronic requisition is created. This is the primary data quality gate — missing required fields block submission entirely.</div>
+    <div class="inner"><div class="inner-title">Required Fields</div>
+      <ul class="act-list">
+        <li>Patient demographics: Last name, First name, DOB, Gender, Address (City / State / ZIP)</li>
+        <li>Primary insurance name + Policy number; Secondary if applicable</li>
+        <li>Ordering provider: Full name + NPI</li>
+        <li><strong>ICD-10 diagnosis code(s): minimum 1 — cannot be left blank</strong></li>
+        <li>Ordered tests: Panel code(s); test–specimen type confirmed</li>
+        <li>Billing type: Insurance / Bill Client / Cash / Card — explicit selection required</li>
+        <li>Collection date and location</li>
+      </ul>
+    </div>
+    <div class="gate-box"><div class="gate-lbl">⊘ Block Gate</div><ul>
+      <li>ICD-10 diagnosis code missing</li>
+      <li>NPI absent</li>
+      <li>Primary insurance missing (Insurance / SNF type)</li>
+      <li>Billing type not selected</li>
+    </ul></div>
+    <div class="inner"><div class="inner-title">After Submission</div>
+      <ul class="act-list">
+        <li>All data pushed directly from LABORA into LABDAQ — no re-entry at accession</li>
+        <li>LABORA scope limited to intake; all further processing in LABDAQ</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Electronic REQ with mandatory field validation</li><li>Billing type set at intake</li><li>Missing ICD/NPI/Insurance blocked here — never reach DM</li><li>Direct LABDAQ push from LABORA</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Paper REQ as sole source</li><li>Data problems discovered at CS or Billing</li><li>No intake validation</li><li>Problem Log Excel for data errors</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>LABORA → LABDAQ sync</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">Accession</div><div class="step-num" style="color:var(--s1)">01</div><div class="sys-tag">LABDAQ</div></div>
+  <div class="card c1">
+    <div class="card-title">Specimen Accession & Verification</div>
+    <div class="card-desc">Specimen physical integrity is verified and LABDAQ data (populated from LABORA) is confirmed. This step is verification — not data entry.</div>
+    <div class="inner"><div class="inner-title">Accession Actions</div>
+      <ul class="act-list">
+        <li>Specimen integrity assessed: volume, condition, tube type, match to ordered tests</li>
+        <li>LABDAQ data confirmed — corrections made directly in LABDAQ for any discrepancies</li>
+        <li>Classified: <strong>Ready for Testing / Problem Panel / Cancel</strong></li>
+        <li>ORGANIZATION_TYPE confirmed per client: Facility / Physician / B2B</li>
+      </ul>
+    </div>
+    <div class="prob-box"><div class="prob-lbl">◆ Problem Panel — Specimen Issue</div><ul>
+      <li><strong>Definition:</strong> Specimen cannot be tested due to physical quality (hemolysis, insufficient volume, wrong tube, degraded sample) — distinct from data problems blocked at Step 00</li>
+      <li>Flagged in LABDAQ — visible via DM filter; <strong>no separate Excel Problem Log</strong></li>
+      <li>Client contacted for re-collection → re-enters at Step 00 if successful</li>
+      <li>Not resolved within 7 days → order cancelled; REQ closed in LABDAQ</li>
+    </ul></div>
+    <div class="inner"><div class="inner-title">Lab QA/QC — Billing Eligibility Trigger</div>
+      <ul class="act-list">
+        <li>QA/QC performed on specimen and result</li>
+        <li>Upon completion: <strong>REQ_PRINTED_DATE set in LABDAQ</strong> — formal billing eligibility trigger</li>
+        <li>Cases without REQ_PRINTED_DATE not extracted in DM</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Problem Panel classified in LABDAQ; DM-filterable</li><li>Re-collection protocol (7-day limit)</li><li>ORGANIZATION_TYPE per client</li><li>REQ_PRINTED_DATE as billing trigger</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Manual data entry from paper REQ</li><li>Separate Excel Problem Log</li><li>Data errors detected here (now blocked at Step 00)</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Accession complete → REQ scan</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">REQ Scan</div><div class="step-num" style="color:var(--s1)">01b</div><div class="sys-tag">LABORA</div></div>
+  <div class="card c1">
+    <div class="card-title">Paper REQ Scan — Post-Accession</div>
+    <div class="card-desc">After accession is complete, the paper REQ is scanned and linked. Scanning here — not at the billing stage — ensures REQ documents are available for bulk retrieval at Step 04.</div>
+    <div class="inner"><div class="inner-title">Scan Actions</div>
+      <ul class="act-list">
+        <li>Paper REQ scanned following accession completion</li>
+        <li>Scan uploaded to LABORA → linked to accession number in LABDAQ</li>
+        <li>Stored on server with <strong>REQ number as filename</strong> — enables direct bulk export at Step 04</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Scan immediately after accession (not days later)</li><li>Linked to REQ# in LABORA/LABDAQ</li><li>Enables bulk REQ export at billing stage</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Scanning at billing stage (days after accession)</li><li>Date-based batch scan organization</li><li>SCAN_DAILY_LIST.xlsx</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>REQ_PRINTED_DATE set → DM extraction</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">DM Extraction</div><div class="step-num" style="color:var(--s2)">02</div><div class="sys-tag">LABDAQ / DataMiner</div></div>
+  <div class="card c2">
+    <div class="card-title">Daily DM Extraction — Single Source of Truth</div>
+    <div class="card-desc">Daily DataMiner export filtered by REQ_PRINTED_DATE. Send-out and Problem Panel cases identifiable directly from DM — no separate Excel logs maintained.</div>
+    <div class="inner"><div class="inner-title">Extraction Filter Logic</div>
+      <ul class="act-list">
+        <li>Extract all records where <strong>REQ_PRINTED_DATE is populated</strong></li>
+        <li><strong>Insurance eligible:</strong> REQ_PRINTED_DATE present AND PANEL_LAB_NAME = "Open Healthcare"</li>
+        <li><strong>Send-out:</strong> PANEL_LAB_NAME ≠ "Open Healthcare" → identified at extraction; routed to Send out only sheet; <strong>no separate log</strong></li>
+        <li><strong>Problem Panel:</strong> excluded via LABDAQ flag; <strong>no separate log</strong></li>
+        <li>Duplicates → DUPES REMOVED sheet (not deleted)</li>
+        <li>SSN always left blank; COMPARE sheet maintained</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Expected AR Recognition</div>
+      <ul class="act-list">
+        <li>Expected revenue recognized for all billing-eligible cases at extraction (accrual basis)</li>
+        <li>Calculated using Price Group configured in LABDAQ per client / per test</li>
+        <li>Expected AR entered into QuickBooks — billing is collection mechanism, not revenue creation</li>
+      </ul>
+    </div>
+    <div class="warn-box"><div class="warn-lbl">⚠ Snapshot Lock</div><p>Snapshot used for billing/AR must be locked after extraction. Subsequent LABDAQ changes tracked in next day's COMPARE sheet only.</p></div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>REQ_PRINTED_DATE as extraction trigger</li><li>Send-out via PANEL_LAB_NAME — no separate log</li><li>Problem Panel via DM filter — no separate log</li><li>ORGANIZATION_TYPE in DM</li><li>Expected AR at extraction (accrual)</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Manual CS sorting (~2–3 hrs/day)</li><li>Send-out Log (Excel)</li><li>Problem Log (Excel)</li><li>AR created at invoice stage</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Master DM → Reconciliation</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">Reconciliation</div><div class="step-num" style="color:var(--s3)">03</div><div class="sys-tag">Excel</div></div>
+  <div class="card c3">
+    <div class="card-title">Reconciliation — Data Enrichment & Case Routing</div>
+    <div class="card-desc">Master DM enriched with billing-specific fields via VLOOKUP from versioned reference files. Cases routed to correct billing stream.</div>
+    <div class="inner"><div class="inner-title">Workbook Sheet Structure</div>
+      <ul class="act-list">
+        <li><strong>MASTER DM</strong> — locked after paste; never edited directly</li>
+        <li><strong>Reconciliation</strong> — enriched via VLOOKUP</li>
+        <li><strong>QA / Final Manifest / Stat test / Cultures / Send out only / DUPES REMOVED / COMPARE</strong></li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Fields Added via VLOOKUP</div>
+      <ul class="act-list">
+        <li><strong>PECOS</strong> — NPI → Rep List: Medicare enrollment status</li>
+        <li><strong>REP / BILLING TYPE</strong> — Location → Rep List</li>
+        <li><strong>TEST TYPES</strong> — Panel → TEST LIST</li>
+        <li><strong>CULTURE flag</strong> — auto-detected from PANEL_NAME → Cultures sheet (no manual search)</li>
+        <li><strong>SEND OUT ONLY</strong> — PANEL_LAB_NAME ≠ "Open Healthcare" → Send out only sheet</li>
+        <li><strong>DIAGNOSIS_13–20</strong> — extended beyond LABDAQ 12-code limit</li>
+      </ul>
+    </div>
+    <div class="snf-box"><div class="snf-lbl">SNF-Specific Rules</div><ul>
+      <li>BILLING TYPE = SNF identified via VLOOKUP from Rep List</li>
+      <li>Insurance attempted first; if unavailable → reclassified as Bill Client to facility at Step 04 QA</li>
+      <li>Census data in Excel: VLOOKUP-verifiable. Census in PDF: manual verification required</li>
+      <li>Mileage / travel fee flag via Rep List (MILES_LOCATIONS reference)</li>
+    </ul></div>
+    <div class="inner"><div class="inner-title">Reference File Ownership</div>
+      <ul class="act-list">
+        <li><strong>Rep List</strong> — updated within 3 business days of any new account setup</li>
+        <li><strong>TEST LIST</strong> — updated whenever panels change</li>
+        <li><strong>Client Price Master</strong> — per client; all pricing structures</li>
+        <li><strong>Medicare Rate Reference</strong> — verified and updated each January</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Culture auto-detection — no manual search</li><li>SNF reclassification logic documented</li><li>Send-out in workbook sheet (no separate file)</li><li>Versioned reference files with designated owners</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Manual culture search</li><li>Separate Send-out Log file</li><li>Unowned reference files</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Reconciliation → QA review</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">QA & Manifest</div><div class="step-num" style="color:var(--s4)">04</div><div class="sys-tag">Excel + LABORA</div></div>
+  <div class="card c4">
+    <div class="card-title">QA Review → Final Manifest Generation</div>
+    <div class="card-desc">Secondary QA confirms billing readiness per case. Two Manifest versions: Internal (all fields) and Biller-facing (internal fields stripped).</div>
+    <div class="inner"><div class="inner-title">QA Checklist</div>
+      <ul class="act-list">
+        <li>Patient address, NPI/PECOS, primary + secondary insurance, diagnosis codes verified</li>
+        <li>STAT flag, Culture flag and CPT codes confirmed</li>
+        <li>PANEL_LAB_NAME = "Open Healthcare" confirmed for insurance cases</li>
+        <li>Draw/Travel fee verified per client rules in Rep List</li>
+        <li><strong>SNF:</strong> FINAL BILLING TYPE confirmed — Insurance or Bill Client based on insurance availability</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">REQ Document Retrieval</div>
+      <ul class="act-list">
+        <li>REQ_ACCESSION list copied from Final Manifest → pasted into LABORA bulk export</li>
+        <li>All REQ scan PDFs exported in bulk by REQ# — no date-batch search</li>
+        <li>Scan completeness confirmed via LABORA link check — no SCAN_DAILY_LIST.xlsx</li>
+        <li>LABDAQ Billing Report (PDF) exported for same date range</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Biller-Facing Manifest — Fields Removed</div>
+      <ul class="act-list">
+        <li>SSN, PATIENT_CODE, DOCTOR_CODE, REQ_INITIALS, REQ_RECEIVED_DATE, LOCATION_CODE</li>
+        <li>PANEL_CODE, PANEL_STAT, ORGANIZATION info, TEST TYPES, BILLING TYPE flags</li>
+        <li>PECOS, REP, MATCH, QA notes, Entered By</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>LABORA bulk REQ export by REQ#</li><li>Two Manifest versions (internal + biller-facing)</li><li>SNF FINAL BILLING TYPE confirmed at QA</li><li>No separate scan log or problem log files</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Manual date-batch REQ search</li><li>SCAN_DAILY_LIST.xlsx</li><li>OHUS_PROBLEMS_MISSINGREQS.xlsx</li><li>NoINS.xlsx</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Final Manifest → Billing submission</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">Billing</div><div class="step-num" style="color:var(--s5)">05</div><div class="sys-tag">CollaborateMD / QuickBooks</div></div>
+  <div class="card c5">
+    <div class="card-title">Billing Submission — Three Tracks</div>
+    <div class="card-desc">Track determined at Step 03 and confirmed at Step 04. See Tab ③ for full branch detail including SNF rules.</div>
+    <div class="inner"><div class="inner-title">Track A — Insurance</div>
+      <ul class="act-list">
+        <li>Package: Biller-facing Manifest + REQ PDFs (LABORA bulk) + Billing Report → PRG (CollaborateMD)</li>
+        <li>Daily by Date of Service; <strong>no direct LABDAQ access granted to PRG</strong></li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Track B — Bill Client</div>
+      <ul class="act-list">
+        <li>Monthly; pricing from Client Price Master only; Draw/Travel fee verified</li>
+        <li>Package: Manifest + QuickBooks Invoice → client</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Track C — Cash / Card</div>
+      <ul class="act-list">
+        <li>No biller submission; unified Cash Log (Excel only); no manual ledger</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Process-based PRG submission (no LABDAQ access)</li><li>LABORA bulk REQ export</li><li>Unified Cash Log only</li><li>Client Price Master for all BC pricing</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Physical REQ delivery</li><li>Dual cash recording (ledger + Excel)</li><li>Ad-hoc pricing (sales PDFs)</li><li>Submission to Synaps</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Payment received → AR posting</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">AR Posting</div><div class="step-num" style="color:var(--s6)">06</div><div class="sys-tag">QuickBooks / CollaborateMD</div></div>
+  <div class="card c6">
+    <div class="card-title">Payment Receipt & AR Posting</div>
+    <div class="card-desc">Payments posted against expected AR recognized at Step 02. AR Aging reviewed weekly.</div>
+    <div class="inner"><div class="inner-title">Actions</div>
+      <ul class="act-list">
+        <li>EFT forwarded to PRG daily for EOB breakdown → posted to QuickBooks AR per test</li>
+        <li><strong>EOB spot-check: ≥20% reviewed by second party</strong> — eliminates single-person dependency</li>
+        <li>Bill Client payments posted to matching invoice; AR released</li>
+        <li>AR Aging reviewed weekly: 0–30 / 31–60 / 61–90 / 90+ days</li>
+        <li>61–90 day cases automatically trigger Step 07</li>
+        <li>Medicare rate reference verified and updated each January</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>EOB spot-check ≥20%</li><li>Weekly AR Aging review</li><li>61–90d auto-trigger for Step 07</li><li>AR recognized at Step 02, not at invoice</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>Single-person EOB processing</li><li>Ad-hoc AR review</li><li>AR created at invoice issuance</li></ul></div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><div class="conn-line"></div><span>Unpaid / denied → denial management</span><div class="conn-arr">↓</div></div>
+
+<div class="step-row">
+  <div class="step-meta"><div class="step-phase">Denial & Recovery</div><div class="step-num" style="color:var(--s7)">07</div><div class="sys-tag">CollaborateMD / QuickBooks</div></div>
+  <div class="card c7">
+    <div class="card-title">Denial Management & AR Recovery</div>
+    <div class="card-desc">Denied claims and overdue AR managed. Monthly analysis feeds back upstream to improve intake quality.</div>
+    <div class="inner"><div class="inner-title">Insurance Denials</div>
+      <ul class="act-list">
+        <li>PRG provides denial report: status, reason code, amount at risk</li>
+        <li>Classified: <strong>Correctable / Non-correctable / Timely Filing at Risk</strong></li>
+        <li>Correctable: corrected → resubmitted to PRG</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Bill Client Overdue AR</div>
+      <ul class="act-list">
+        <li>31–60d: reminder → 61–90d: direct follow-up → 90d+: management escalation</li>
+        <li>Disputed charges reviewed against Client Price Master; corrected invoice reissued if needed</li>
+      </ul>
+    </div>
+    <div class="inner"><div class="inner-title">Monthly Upstream Feedback</div>
+      <ul class="act-list">
+        <li>Top 5 denial reason codes identified; root cause fed back to Step 00 or 05</li>
+        <li>Denial rate KPI: target <strong>&lt;5%</strong>; write-offs require authorization and QuickBooks documentation</li>
+      </ul>
+    </div>
+    <div class="d-grid">
+      <div class="d-box add"><div class="d-lbl">Added</div><ul><li>Structured denial classification</li><li>Monthly trend + upstream feedback</li><li>BC escalation protocol (30/60/90d)</li><li>Denial rate KPI + write-off audit log</li></ul></div>
+      <div class="d-box del"><div class="d-lbl">Removed</div><ul><li>No denial framework</li><li>Ad-hoc AR follow-up</li><li>No upstream feedback</li><li>Undocumented write-offs</li></ul></div>
+    </div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ══ PANEL 3: BILLING BRANCHES ══ -->
+<div class="panel" id="panel-billing">
+<div class="page">
+<div class="sec-div"><div class="sec-div-lbl">Billing Type Branch Detail</div><div class="sec-div-line"></div></div>
+<p style="font-size:12px;color:#555;margin-bottom:20px;line-height:1.7;">Billing type is set at <strong>Step 00</strong> and confirmed at <strong>Step 03</strong> (BILLING TYPE via VLOOKUP) and <strong>Step 04</strong> (FINAL BILLING TYPE via QA). The tracks below describe the specific actions required for each billing path.</p>
+
+<div style="border-left:4px solid var(--s1-bd);padding-left:16px;margin-bottom:28px;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--s1);margin-bottom:10px;">Track A — Insurance Billing</div>
+  <table class="tbl"><thead><tr><th style="width:120px;">Step</th><th>Required Action</th><th style="width:200px;">Output / System</th></tr></thead><tbody>
+  <tr><td><strong>Step 00</strong></td><td>Billing type = Insurance. Primary insurance + policy# entered. ICD and NPI confirmed.</td><td>LABORA REQ</td></tr>
+  <tr><td><strong>Step 01</strong></td><td>Specimen integrity verified. PANEL_LAB_NAME = "Open Healthcare" required for insurance eligibility.</td><td>LABDAQ record</td></tr>
+  <tr><td><strong>Step 02</strong></td><td>Extracted: REQ_PRINTED_DATE present AND PANEL_LAB_NAME = "Open Healthcare". Expected AR recognized.</td><td>Master DM — insurance rows</td></tr>
+  <tr><td><strong>Step 03</strong></td><td>PECOS verified. BILLING TYPE = Insurance confirmed. Culture CPT codes added if applicable. SEND OUT cases separated.</td><td>Reconciliation sheet</td></tr>
+  <tr><td><strong>Step 04</strong></td><td>Address, NPI, insurance, diagnosis verified. FINAL BILLING TYPE = Insurance confirmed. REQ PDFs bulk-exported. Billing Report exported.</td><td>Biller-facing Manifest + REQ PDFs + Billing Report PDF</td></tr>
+  <tr><td><strong>Step 05</strong></td><td>Package submitted to PRG via ShareFile or LABDAQ attachment. Daily by Date of Service. No direct LABDAQ access granted to PRG.</td><td>PRG / CollaborateMD</td></tr>
+  <tr><td><strong>Step 06</strong></td><td>EFT/check → PRG for EOB breakdown → posted to QuickBooks AR. EOB spot-check ≥20%.</td><td>QuickBooks AR</td></tr>
+  <tr><td><strong>Step 07</strong></td><td>Denials classified and processed. Monthly pattern analysis fed back to Step 00 or 05.</td><td>CollaborateMD denial report</td></tr>
+  </tbody></table>
+</div>
+
+<div style="border-left:4px solid var(--snf-bd);padding-left:16px;margin-bottom:28px;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--snf);margin-bottom:8px;">SNF Accounts — Conditional Rules within Track A or B</div>
+  <p style="font-size:12px;color:#555;margin-bottom:10px;line-height:1.7;">SNF accounts follow a conditional billing path. Insurance is attempted first; if unavailable, reclassified as Bill Client to the facility.</p>
+  <table class="tbl"><thead><tr><th style="width:220px;">Condition</th><th>Action</th></tr></thead><tbody>
+  <tr><td>Insurance information <strong>complete</strong> at intake</td><td>Billing type = Insurance. Proceeds through Track A standard flow.</td></tr>
+  <tr><td>Insurance information <strong>missing</strong> at intake</td><td>LABORA does not block SNF accounts. Billing type = SNF. Reclassification decision made at Step 03–04.</td></tr>
+  <tr><td>Insurance <strong>recoverable</strong> at Step 03 (via census or follow-up)</td><td>FINAL BILLING TYPE = Insurance. Case proceeds as Track A.</td></tr>
+  <tr><td>Insurance <strong>not recoverable</strong> at Step 03</td><td>FINAL BILLING TYPE = Bill Client to facility. Case proceeds as Track B.</td></tr>
+  <tr><td>Census data in <strong>Excel</strong></td><td>VLOOKUP-verifiable for insurance verification.</td></tr>
+  <tr><td>Census data in <strong>PDF only</strong></td><td>Manual verification required — no automated lookup.</td></tr>
+  <tr><td>Mileage / Travel fee location</td><td>Flag confirmed via Rep List (MILES_LOCATIONS). Applied before invoicing.</td></tr>
+  <tr><td>After-hours / STAT charges</td><td>Identified via TEST TYPES or time-of-service. Applied per Client Price Master rules.</td></tr>
+  </tbody></table>
+</div>
+
+<div style="border-left:4px solid var(--s3-bd);padding-left:16px;margin-bottom:28px;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--s3);margin-bottom:10px;">Track B — Bill Client</div>
+  <table class="tbl"><thead><tr><th style="width:120px;">Step</th><th>Required Action</th><th style="width:200px;">Output / System</th></tr></thead><tbody>
+  <tr><td><strong>Step 00</strong></td><td>Billing type = Bill Client. No insurance required. ICD and NPI still required.</td><td>LABORA REQ</td></tr>
+  <tr><td><strong>Step 02</strong></td><td>Extracted when REQ_PRINTED_DATE present. PANEL_LAB_NAME restriction does not apply. Expected AR recognized using Client Price Master rates.</td><td>Master DM — BC rows</td></tr>
+  <tr><td><strong>Step 03</strong></td><td>BILLING TYPE = Bill Client confirmed. Pricing structure identified from Client Price Master. Draw/Travel fee flag verified.</td><td>Reconciliation sheet</td></tr>
+  <tr><td><strong>Step 04</strong></td><td>FINAL BILLING TYPE = Bill Client confirmed. Incorrect LABDAQ charges flagged and corrected before invoicing.</td><td>Internal Manifest (BC rows)</td></tr>
+  <tr><td><strong>Step 05</strong></td><td>Monthly invoice prepared. Pricing from Client Price Master. Invoice generated in QuickBooks. Package: Manifest + QuickBooks Invoice → client.</td><td>QuickBooks Invoice</td></tr>
+  <tr><td><strong>Step 06</strong></td><td>Client payment posted to matching QuickBooks invoice; AR released. Partial payments noted.</td><td>QuickBooks AR</td></tr>
+  <tr><td><strong>Step 07</strong></td><td>31–60d: reminder. 61–90d: direct follow-up. 90d+: escalation. Disputed charges reviewed vs. Client Price Master.</td><td>QuickBooks AR Aging</td></tr>
+  </tbody></table>
+</div>
+
+<div style="border-left:4px solid var(--s5-bd);padding-left:16px;margin-bottom:28px;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--s5);margin-bottom:10px;">Track C — Cash / Card</div>
+  <table class="tbl"><thead><tr><th style="width:120px;">Step</th><th>Required Action</th><th style="width:200px;">Output / System</th></tr></thead><tbody>
+  <tr><td><strong>Step 00</strong></td><td>Billing type = Cash or Card. Payment amount collected at point of service.</td><td>LABORA REQ</td></tr>
+  <tr><td><strong>Step 02</strong></td><td>Extracted in daily DM. No AR recognized — already collected. Internal reconciliation only.</td><td>Master DM — Cash rows</td></tr>
+  <tr><td><strong>Step 05</strong></td><td>Logged in unified Cash Log (Excel): patient name, amount, type, REQ#, collection date, deposit date. Receipt confirmed with initials. No manual ledger.</td><td>Unified Cash Log (Excel)</td></tr>
+  <tr><td><strong>Step 06</strong></td><td>EFT deposits downloaded daily from bank and forwarded to PRG for payment breakdown. Cash Log reconciled against bank deposits monthly.</td><td>Bank + Cash Log</td></tr>
+  </tbody></table>
+</div>
+</div></div>
+
+<!-- ══ PANEL 4: PRG TRANSITION ══ -->
+<div class="panel" id="panel-prg">
+<div class="page">
+<div class="sec-div"><div class="sec-div-lbl">PRG Transition — Conditions & Timeline</div><div class="sec-div-line"></div></div>
+<p style="font-size:12px;color:#555;margin-bottom:20px;line-height:1.7;">Transition from Synaps to PRG (CollaborateMD) is a structural change — not just a vendor swap. The following pre-conditions must be met before full transition can proceed. OHUS retains control of LABDAQ and patient data throughout.</p>
+
+<div style="background:var(--del-bg);border:1px solid var(--del-bd);border-radius:8px;padding:12px 16px;margin-bottom:20px;">
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--del);margin-bottom:6px;">Confirmed OHUS Internal Decisions (as of March 27, 2026)</div>
+  <ul style="list-style:none;">
+    <li style="font-size:12px;line-height:1.7;padding-left:14px;position:relative;color:#5a1a1a;">◆ &nbsp;PRG will NOT be granted direct access to LABDAQ — regardless of billing staff location</li>
+    <li style="font-size:12px;line-height:1.7;padding-left:14px;position:relative;color:#5a1a1a;">◆ &nbsp;A process-based near-real-time submission method must be designed as an alternative to direct system access</li>
+    <li style="font-size:12px;line-height:1.7;padding-left:14px;position:relative;color:#5a1a1a;">◆ &nbsp;LABORA scope is limited to the accessioning stage — all data processing beyond that point remains within LABDAQ</li>
+  </ul>
+</div>
+
+<div class="prg-wrap">
+  <div class="prg-item done">
+    <div class="prg-left"><div class="prg-label">Mar 25, 2026</div></div>
+    <div class="prg-right">
+      <div class="prg-title">Initial PRG Meeting held</div>
+      <div class="prg-body">Pre-transition readiness assessed. PRG operating model presented (not yet agreed). Key gaps identified: portal access, LABDAQ access policy, batch vs. real-time.</div>
+      <span class="prg-cond cond-done">✓ Complete</span>
+    </div>
+  </div>
+  <div class="prg-item done">
+    <div class="prg-left"><div class="prg-label">Mar 27, 2026</div></div>
+    <div class="prg-right">
+      <div class="prg-title">LABDAQ access decision communicated to PRG</div>
+      <div class="prg-body">PRG informed that LABDAQ access is on hold. Process-based alternative to be designed by OHUS.</div>
+      <span class="prg-cond cond-done">✓ Complete</span>
+    </div>
+  </div>
+  <div class="prg-item now">
+    <div class="prg-left"><div class="prg-label">Apr 1, 2026</div></div>
+    <div class="prg-right">
+      <div class="prg-title">Next PRG meeting — agenda to be confirmed in advance</div>
+      <div class="prg-body">Agenda items to confirm: REQ document transfer method (ShareFile vs. LABDAQ attachment), submission cadence (daily by DOS), internal QA scope vs. PRG-managed QA, payer portal recovery status.</div>
+      <span class="prg-cond cond-now">⏳ Upcoming</span>
+    </div>
+  </div>
+  <div class="prg-item next">
+    <div class="prg-left"><div class="prg-label">Pre-condition</div></div>
+    <div class="prg-right">
+      <div class="prg-title">~90% payer portal access recovered from Synaps</div>
+      <div class="prg-body">Payer portals currently controlled by Synaps. Must be recovered or re-established directly with payers before PRG transition can proceed. This is the primary transition blocker.</div>
+      <span class="prg-cond cond-block">⊘ Blocker — not yet resolved</span>
+    </div>
+  </div>
+  <div class="prg-item next">
+    <div class="prg-left"><div class="prg-label">Pre-condition</div></div>
+    <div class="prg-right">
+      <div class="prg-title">REQ document transfer method confirmed with PRG</div>
+      <div class="prg-body">Options: ShareFile (preferred) or LABDAQ attachment per REQ. Must be confirmed and tested before go-live. LABORA bulk export by REQ# will supply the document package.</div>
+      <span class="prg-cond cond-block">⊘ To be confirmed at Apr 1 meeting</span>
+    </div>
+  </div>
+  <div class="prg-item next">
+    <div class="prg-left"><div class="prg-label">Pre-condition</div></div>
+    <div class="prg-right">
+      <div class="prg-title">Submission cadence agreed (daily by Date of Service)</div>
+      <div class="prg-body">Current OHUS workflow is batch-based. PRG expects near-real-time. Agreement: OHUS submits daily by DOS. No change to internal QA process — PRG receives clean Final Manifest only.</div>
+      <span class="prg-cond cond-block">⊘ To be confirmed at Apr 1 meeting</span>
+    </div>
+  </div>
+  <div class="prg-item blocked">
+    <div class="prg-left"><div class="prg-label">Full Go-Live</div></div>
+    <div class="prg-right">
+      <div class="prg-title">Full PRG transition — Synaps decommissioned</div>
+      <div class="prg-body">All pre-conditions met. PRG processes all insurance claims via CollaborateMD. OHUS manages internal QA, manifest generation, and REQ document delivery. Denial management handled by PRG with monthly reporting to OHUS.</div>
+      <span class="prg-cond cond-block">⊘ Pending all pre-conditions</span>
+    </div>
+  </div>
+</div>
+
+<div class="sec-div" style="margin-top:32px;"><div class="sec-div-lbl">PRG Operating Model — Agreed vs. Not Agreed</div><div class="sec-div-line"></div></div>
+<table class="tbl"><thead><tr><th style="width:220px;">Topic</th><th>PRG's Standard Model</th><th>OHUS Decision</th></tr></thead><tbody>
+<tr><td><strong>LABDAQ access</strong></td><td>Direct access required for real-time claim processing</td><td style="color:var(--del);">Not granted — process-based alternative only</td></tr>
+<tr><td><strong>Submission method</strong></td><td>Pull directly from system (real-time)</td><td style="color:var(--add);">Push from OHUS daily (Final Manifest + REQ PDFs + Billing Report)</td></tr>
+<tr><td><strong>Internal QA scope</strong></td><td>Client submits raw data; PRG handles QA</td><td style="color:var(--add);">Full Reconciliation + QA remains internal; PRG receives clean Manifest only</td></tr>
+<tr><td><strong>Payer portal access</strong></td><td>Admin-level control or full transfer</td><td style="color:var(--warn);">To be confirmed — ~90% must be recovered from Synaps first</td></tr>
+<tr><td><strong>Denial management</strong></td><td>PRG handles all denial tracking and reprocessing</td><td style="color:var(--add);">PRG reprocesses; OHUS reviews monthly denial report and feeds root causes upstream</td></tr>
+<tr><td><strong>Secondary insurance</strong></td><td>PRG identifies and follows up</td><td style="color:var(--add);">OHUS verifies at Step 04 QA; added to LABDAQ if available; PRG handles remainder</td></tr>
+</tbody></table>
+</div></div>
+
+<!-- ══ PANEL 5: COMPARE ══ -->
+<div class="panel" id="panel-compare">
+<div class="page">
+<div class="sec-div"><div class="sec-div-lbl">As-Is vs To-Be — Key Changes</div><div class="sec-div-line"></div></div>
+<table class="tbl"><thead><tr><th style="width:170px;">Topic</th><th>As-Is</th><th>To-Be</th><th style="width:120px;">Impact</th></tr></thead><tbody>
+<tr><td><strong>Data intake validation</strong></td><td style="color:#8a1a1a;">Paper REQ only. Missing ICD/NPI/Insurance discovered at CS or Billing.</td><td style="color:#1a5e2e;">LABORA blocks submission if ICD, NPI, Insurance, or billing type missing. Problems eliminated at source.</td><td style="font-size:11px;">Eliminates downstream rework from data problems</td></tr>
+<tr><td><strong>Problem cases — data type</strong></td><td style="color:#8a1a1a;">Detected at CS/Billing. Logged in separate Excel files (OHUS_PROBLEMS.xlsx, NoINS.xlsx).</td><td style="color:#1a5e2e;">Blocked at LABORA Step 00. Cannot enter DM. No separate log files.</td><td style="font-size:11px;">Eliminates 2+ Excel log files</td></tr>
+<tr><td><strong>Problem Panel — specimen</strong></td><td style="color:#8a1a1a;">Not formally defined. No structured re-collection protocol.</td><td style="color:#1a5e2e;">Classified in LABDAQ at Step 01. Visible via DM filter. Re-collection → re-enters Step 00. No separate log.</td><td style="font-size:11px;">Clear path; structured re-collection</td></tr>
+<tr><td><strong>Send-out identification</strong></td><td style="color:#8a1a1a;">Manual search in Reconciliation. Separate Send-out Log Excel.</td><td style="color:#1a5e2e;">PANEL_LAB_NAME ≠ "Open Healthcare" → identified at extraction. Send out only sheet in workbook. No separate file.</td><td style="font-size:11px;">Automated; eliminates log file</td></tr>
+<tr><td><strong>CS sorting step</strong></td><td style="color:#8a1a1a;">~2–3 hrs/day manual sorting. 1–2 day processing lag.</td><td style="color:#1a5e2e;">Eliminated. Billing type set at Step 00. Classification flows through DM automatically.</td><td style="font-size:11px;">Saves 2–3 hrs/day; removes lag</td></tr>
+<tr><td><strong>REQ scan timing</strong></td><td style="color:#8a1a1a;">Scanned at billing stage — days after accession. Date-batch organization.</td><td style="color:#1a5e2e;">Scanned at Step 01b (post-accession). Linked by REQ#. Bulk export at Step 04.</td><td style="font-size:11px;">Eliminates scan bottleneck at billing</td></tr>
+<tr><td><strong>Legacy Excel log files</strong></td><td style="color:#8a1a1a;">OHUS_PROBLEMS.xlsx, NoINS.xlsx, Send-out Log, SCAN_DAILY_LIST.xlsx — all manual.</td><td style="color:#1a5e2e;">All eliminated. Replaced by LABORA gate / DM filter / workbook sheets / LABORA scan check.</td><td style="font-size:11px;">4+ files eliminated</td></tr>
+<tr><td><strong>AR recognition timing</strong></td><td style="color:#8a1a1a;">AR created at invoice issuance.</td><td style="color:#1a5e2e;">Expected AR recognized at DM extraction (next day after test). Accrual basis.</td><td style="font-size:11px;">Aligns with accrual accounting (post-April 2025)</td></tr>
+<tr><td><strong>Culture case detection</strong></td><td style="color:#8a1a1a;">Manual search through full daily dataset. Primary daily bottleneck.</td><td style="color:#1a5e2e;">Auto-detected from PANEL_NAME → Cultures sheet automatically.</td><td style="font-size:11px;">Eliminates primary billing bottleneck</td></tr>
+<tr><td><strong>SNF reclassification</strong></td><td style="color:#8a1a1a;">Handled informally / ad-hoc. No documented decision logic.</td><td style="color:#1a5e2e;">Documented: insurance first; if unavailable → Bill Client at Step 04 FINAL BILLING TYPE.</td><td style="font-size:11px;">Consistent, auditable decision</td></tr>
+<tr><td><strong>Final Manifest versioning</strong></td><td style="color:#8a1a1a;">Single manifest with internal fields mixed in.</td><td style="color:#1a5e2e;">Two versions: Internal (all fields) + Biller-facing (stripped). Biller never sees internal data.</td><td style="font-size:11px;">Data control; clean biller submission</td></tr>
+<tr><td><strong>Cash recording</strong></td><td style="color:#8a1a1a;">Manual ledger + Excel — dual recording.</td><td style="color:#1a5e2e;">Unified Cash Log (Excel only). No parallel manual ledger.</td><td style="font-size:11px;">Eliminates dual-entry</td></tr>
+<tr><td><strong>EOB processing</strong></td><td style="color:#8a1a1a;">Single person, no cross-check.</td><td style="color:#1a5e2e;">PRG provides EOB breakdown. ≥20% spot-checked by second party.</td><td style="font-size:11px;">Validation layer introduced</td></tr>
+<tr><td><strong>Denial management</strong></td><td style="color:#8a1a1a;">No framework. Ad-hoc. No upstream feedback.</td><td style="color:#1a5e2e;">Structured classification. Monthly trend analysis. Root cause fed to Step 00/05. &lt;5% KPI.</td><td style="font-size:11px;">New continuous improvement loop</td></tr>
+<tr><td><strong>PRG / LABDAQ access</strong></td><td style="color:#8a1a1a;">Synaps has full external access. No OHUS claim visibility.</td><td style="color:#1a5e2e;">PRG receives no LABDAQ access. Process-based submission. OHUS retains full data control.</td><td style="font-size:11px;">OHUS data control maintained</td></tr>
+</tbody></table>
+</div></div>
+
+<script>
+function show(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
